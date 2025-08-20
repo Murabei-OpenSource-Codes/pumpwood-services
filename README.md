@@ -12,7 +12,7 @@ npm install pumpwood-services
 
 ## Usage
 
-This package provides three main exports: `safeAwait`, `ApiService`, and `ListService`.
+This package provides three main exports: `safeAwait`, `ApiService`, `ListService` and `RetrieveService`.
 
 ### `safeAwait`
 
@@ -123,6 +123,45 @@ async function listProducts() {
 listProducts();
 ```
 
+### `RetrieveService`
+
+A convenience function that uses an `ApiService` instance to fetch a single resource by its ID. It simplifies making `GET` requests to retrieve endpoints (e.g., `/your-model/retrieve/{id}/`).
+
+**Example:**
+
+```typescript
+import { ApiService, RetrieveService } from 'pumpwood-services';
+
+// Configure the ApiService
+const api = new ApiService({
+  baseUrl: 'https://api.yourapp.com/v1',
+  token: 'your-secret-token',
+});
+
+// Define the expected item type
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+}
+
+async function getProduct(productId: number) {
+  // The response type is a single Product
+  const [product, error] = await RetrieveService<Product>(api, 'product', productId);
+
+  if (error) {
+    console.error('Failed to get product:', error.message);
+    return;
+  }
+
+  if (product) {
+    console.log('Product:', product);
+  }
+}
+
+getProduct(123);
+```
+
 ## API Reference
 
 | Export         | Description                                                                                             |
@@ -130,5 +169,6 @@ listProducts();
 | `safeAwait`    | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                            |
 | `ApiService`   | A class to configure and execute authenticated requests against a backend API.                          |
 | `ListService`  | A function to fetch a list of items for a given model using an `ApiService` instance.                   |
+| `RetrieveService`  | A function to fetch a single item for a given model using an `ApiService` instance.                   |
 | `HttpMethod`   | A type definition for HTTP methods: `"GET" | "POST" | "PUT" | "DELETE"`.                               |
 | `ApiServiceConfig` | An interface for the `ApiService` constructor configuration object (`{ baseUrl: string, token: string }`). |

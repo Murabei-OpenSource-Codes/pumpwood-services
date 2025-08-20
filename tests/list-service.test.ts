@@ -14,8 +14,6 @@ describe("ListService", () => {
 
     const [data, error] = await ListService<typeof mockData>(api, "activities");
 
-    console.log("==> should return data on success", data)
-
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
     expect(fetchMock).toHaveBeenCalledWith(
