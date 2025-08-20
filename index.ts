@@ -1,0 +1,147 @@
+
+/**
+ * Safely awaits a promise, returning a tuple with either the resolved data or an error.
+ * This avoids try/catch blocks and provides type-safe error handling.
+ *
+ * @template T - The type of the resolved promise value.
+ * @template E - The type of the error (defaults to `Error`).
+ * 
+ * @param {Promise<T>} promise - The promise to be awaited.
+ * 
+ * @returns {Promise<[T, null] | [null, E]>} A tuple where:
+ *   - First element (`T`) is the resolved data and second is `null` (success),
+ *   - OR first element is `null` and second (`E`) is the caught error (failure).
+ *
+ * @example
+ * // Successful resolution:
+ * const [data, error] = await safeAwait(fetchData());
+ * if (error) console.error("Failed:", error);
+ * else console.log("Data:", data);
+ *
+ * @example
+ * // Custom error type:
+ * type ApiError = { status: number };
+ * const [user, apiError] = await safeAwait<User, ApiError>(getUser());
+ */
+export async function safeAwait<T, E = Error>(
+  promise: Promise<T>,
+): Promise<[T, null] | [null, E]> {
+  try {
+    const data = await promise;
+    return [data, null];
+  } catch (error) {
+    return [null, error as E];
+  }
+}
+
+
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+
+export interface ApiServiceConfig {
+  baseUrl: string;
+  token: string;
+}
+
+export class ApiService {
+  private baseUrl: string;
+  private token: string;
+
+  /**
+   * Creates an instance of ApiService.
+   * @param {ApiServiceConfig} config - The configuration for the API service.
+   * @param {string} config.baseUrl - The base URL of the API.
+   * @param {string} config.token - The authentication token.
+   */
+  constructor({ baseUrl, token }: ApiServiceConfig) {
+    this.baseUrl = baseUrl;
+    this.token = token;
+  }
+
+  /**
+   * Performs an API request.
+   * @template T - The expected type of the response data.
+   * @param {HttpMethod} method - The HTTP method for the request.
+   * @param {string} endpoint - The API endpoint to call.
+   * @param {any} [body] - The request body for POST, PUT requests.
+   * @returns {Promise<T>} A promise that resolves with the response data.
+   * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
+   */
+  async request<T = any>(
+    method: HttpMethod,
+    endpoint: string,
+    body?: any
+  ): Promise<T> {
+    if (!this.baseUrl) {
+      throw new Error(
+        "ApiService: baseUrl is missing. Ensure it is provided when creating the ApiService instance."
+      );
+    }
+
+    /**
+     * This removes the '/' with nothing
+     **/
+    const url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(
+      /^\//,
+      ""
+    )}`;
+    console.log("==> url: " + url);
+    const headers: HeadersInit = {
+      Authorization: `Token ${this.token}`,
+      "Content-Type": "application/json",
+    };
+
+    const options: RequestInit = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    return response.status === 204 ? null as T : await response.json();
+  }
+}
+
+
+/**
+ * Fetches a list of items for a given model from the API.
+ * @template T - The expected type of the list response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to list.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ */
+export const ListService = async <T>(
+  api: ApiService,
+  modelClass: string
+): Promise<[T | null, Error | null]> => {
+  const [response, error] = await safeAwait(
+    api.request<T>("POST", `/${modelClass}/list/`, {})
+  );
+
+  if (error) {
+    console.error("==> ListService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
+
+export const RetrieveService = async <T>(
+  api: ApiService,
+  modelClass: string,
+  pk: number
+): Promise<[T | null, Error | null]> => {
+  const [response, error] = await safeAwait(
+    api.request<T>("GET", `/${modelClass}/retrieve/${String(pk)}/`)
+  );
+
+  if (error) {
+    console.error("==> RetrieveService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};

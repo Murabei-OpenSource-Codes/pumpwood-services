@@ -1,0 +1,31 @@
+{
+  "name": "pumpwood-services",
+  "version": "0.5.3-alpha",
+  "description": "A package with all services that connect to Pumpwood",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "author": "Antonio Carlos Filho, @acfilho_dev",
+  "license": "ISC",
+  "devDependencies": {
+    "@jest/globals": "^30.0.5",
+    "@types/jest": "^30.0.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.14.10",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.5.3"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "jest-fetch-mock": "^3.0.3"
+  }
+}
