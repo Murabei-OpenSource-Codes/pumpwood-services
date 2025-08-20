@@ -171,4 +171,3 @@ getProduct(123);
 | `ListService`  | A function to fetch a list of items for a given model using an `ApiService` instance.                   |
 | `RetrieveService`  | A function to fetch a single item for a given model using an `ApiService` instance.                   |
 | `HttpMethod`   | A type definition for HTTP methods: `"GET" | "POST" | "PUT" | "DELETE"`.                               |
-| `ApiServiceConfig` | An interface for the `ApiService` constructor configuration object (`{ baseUrl: string, token: string }`). |
