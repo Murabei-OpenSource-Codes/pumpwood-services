@@ -78,7 +78,7 @@ export class ApiService {
     }
 
     /**
-     * This removes the '/' with nothing
+     * This replaces the '/' with nothing
      **/
     const url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(
       /^\//,
@@ -110,14 +110,19 @@ export class ApiService {
  * @template T - The expected type of the list response data.
  * @param {ApiService} api - An instance of the ApiService.
  * @param {string} modelClass - The name of the model class to list.
+ * @param {Record<any, any>} body - The body of the request as json.
  * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
  */
 export const ListService = async <T>(
   api: ApiService,
-  modelClass: string
+  modelClass: string,
+  body?: Record<any, any>
 ): Promise<[T | null, Error | null]> => {
+
+  console.log("==> body", body)
+
   const [response, error] = await safeAwait(
-    api.request<T>("POST", `/${modelClass}/list/`, {})
+    api.request<T>("POST", `/${modelClass}/list/`, body)
   );
 
   if (error) {
@@ -145,3 +150,49 @@ export const RetrieveService = async <T>(
 
   return [response, null];
 };
+
+export const SaveService = async <T>(
+  api: ApiService,
+  modelClass: string,
+  body: Record<any, any>
+): Promise<[T | null, Error | null]> => {
+  const [response, error] = await safeAwait(
+    api.request<T>("POST", `/${modelClass}/save/`, body)
+  );
+
+  if (error) {
+    console.error("==> SaveService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
+
+/**
+ * Deletes an item for a given model from the API.
+ * @template T - The expected type of the delete response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to delete from.
+ * @param {number} pk - The primary key of the item to delete.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ */
+export const DeleteService = async <T = void>(
+  api: ApiService,
+  modelClass: string,
+  pk: number
+): Promise<[T | null, Error | null]> => {
+  const [response, error] = await safeAwait(
+    api.request<T>("DELETE", `/${modelClass}/delete/${String(pk)}/`)
+  );
+
+  if (error) {
+    console.error("==> DeleteService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
+
+

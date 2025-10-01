@@ -1,12 +1,12 @@
 {
   "name": "pumpwood-services",
-  "version": "0.5.3-alpha",
+  "version": "0.7.1-alpha",
   "description": "A package with all services that connect to Pumpwood",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest --verbose"
   },
   "author": "Antonio Carlos Filho, @acfilho_dev",
   "license": "ISC",
