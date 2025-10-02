@@ -145,3 +145,29 @@ export const RetrieveService = async <T>(
 
   return [response, null];
 };
+
+/**
+ * Deletes an item for a given model from the API.
+ * @template T - The expected type of the delete response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to delete from.
+ * @param {number} pk - The primary key of the item to delete.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ */
+export const DeleteService = async <T = void>(
+  api: ApiService,
+  modelClass: string,
+  pk: number
+): Promise<[T | null, Error | null]> => {
+  const [response, error] = await safeAwait(
+    api.request<T>("DELETE", `/${modelClass}/delete/${String(pk)}/`)
+  );
+
+  if (error) {
+    console.error("==> DeleteService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
