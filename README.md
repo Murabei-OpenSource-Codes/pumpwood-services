@@ -12,7 +12,7 @@ npm install pumpwood-services
 
 ## Usage
 
-This package provides three main exports: `safeAwait`, `ApiService`, `ListService` and `RetrieveService`.
+This package provides four main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, and `DeleteService`.
 
 ### `safeAwait`
 
@@ -162,12 +162,43 @@ async function getProduct(productId: number) {
 getProduct(123);
 ```
 
+### `DeleteService`
+
+A convenience function that uses an `ApiService` instance to delete a single resource by its ID. It simplifies making `DELETE` requests to delete endpoints (e.g., `/your-model/delete/{id}/`).
+
+**Example:**
+
+```typescript
+import { ApiService, DeleteService } from 'pumpwood-services';
+
+// Configure the ApiService
+const api = new ApiService({
+  baseUrl: 'https://api.yourapp.com/v1',
+  token: 'your-secret-token',
+});
+
+async function deleteProduct(productId: number) {
+  // The response type can be void or a confirmation message
+  const [response, error] = await DeleteService(api, 'product', productId);
+
+  if (error) {
+    console.error('Failed to delete product:', error.message);
+    return;
+  }
+
+  console.log('Product deleted successfully');
+}
+
+deleteProduct(123);
+```
+
 ## API Reference
 
-| Export         | Description                                                                                             |
-|----------------|---------------------------------------------------------------------------------------------------------|
-| `safeAwait`    | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                            |
-| `ApiService`   | A class to configure and execute authenticated requests against a backend API.                          |
-| `ListService`  | A function to fetch a list of items for a given model using an `ApiService` instance.                   |
-| `RetrieveService`  | A function to fetch a single item for a given model using an `ApiService` instance.                   |
-| `HttpMethod`   | A type definition for HTTP methods: `"GET" | "POST" | "PUT" | "DELETE"`.                               |
+| Export            | Description                                                                                             |
+|-------------------|---------------------------------------------------------------------------------------------------------|
+| `safeAwait`       | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                            |
+| `ApiService`      | A class to configure and execute authenticated requests against a backend API.                          |
+| `ListService`     | A function to fetch a list of items for a given model using an `ApiService` instance.                   |
+| `RetrieveService` | A function to fetch a single item for a given model using an `ApiService` instance.                     |
+| `DeleteService`   | A function to delete a single item for a given model using an `ApiService` instance.                    |
+| `HttpMethod`      | A type definition for HTTP methods: `"GET" | "POST" | "PUT" | "DELETE"`.                               |
