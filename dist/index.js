@@ -54,17 +54,23 @@ class ApiService {
      * @param {HttpMethod} method - The HTTP method for the request.
      * @param {string} endpoint - The API endpoint to call.
      * @param {any} [body] - The request body for POST, PUT requests.
+     * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
      * @returns {Promise<T>} A promise that resolves with the response data.
      * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
      */
-    async request(method, endpoint, body) {
+    async request(method, endpoint, body, queryParams) {
         if (!this.baseUrl) {
             throw new Error("ApiService: baseUrl is missing. Ensure it is provided when creating the ApiService instance.");
         }
         /**
          * This replaces the '/' with nothing
          **/
-        const url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
+        let url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
+        // Append query parameters if provided
+        if (queryParams && Object.keys(queryParams).length > 0) {
+            const queryString = new URLSearchParams(queryParams).toString();
+            url = `${url}?${queryString}`;
+        }
         console.log("==> url: " + url);
         const headers = {
             Authorization: `Token ${this.token}`,
@@ -87,12 +93,20 @@ exports.ApiService = ApiService;
  * @template T - The expected type of the list response data.
  * @param {ApiService} api - An instance of the ApiService.
  * @param {string} modelClass - The name of the model class to list.
- * @param {Record<any, any>} body - The body of the request as json.
+ * @param {any} [body] - Optional request body for the list operation.
+ * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
  * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ *
+ * @example
+ * const [users, error] = await ListService<User[]>(api, "users", { limit: 10 });
+ * if (error) console.error("Failed to fetch users:", error);
+ * else console.log("Users:", users);
  */
-const ListService = async (api, modelClass, body) => {
-    console.log("==> body", body);
-    const [response, error] = await safeAwait(api.request("POST", `/${modelClass}/list/`, body));
+const ListService = async (api, modelClass, body, queryParams) => {
+    const requestBody = body || {};
+    const [response, error] = await safeAwait(queryParams
+        ? api.request("POST", `/${modelClass}/list/`, requestBody, queryParams)
+        : api.request("POST", `/${modelClass}/list/`, requestBody));
     if (error) {
         console.error("==> ListService ERROR:", error);
         return [null, error];
@@ -100,8 +114,20 @@ const ListService = async (api, modelClass, body) => {
     return [response, null];
 };
 exports.ListService = ListService;
-const RetrieveService = async (api, modelClass, pk) => {
-    const [response, error] = await safeAwait(api.request("GET", `/${modelClass}/retrieve/${String(pk)}/`));
+/**
+ * Retrieves a single item for a given model from the API.
+ * @template T - The expected type of the retrieve response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to retrieve from.
+ * @param {number} pk - The primary key of the item to retrieve.
+ * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ */
+const RetrieveService = async (api, modelClass, pk, queryParams) => {
+    // For GET requests, we don't send a body, but we need to pass queryParams as 4th argument
+    const [response, error] = await safeAwait(queryParams
+        ? api.request("GET", `/${modelClass}/retrieve/${String(pk)}/`, undefined, queryParams)
+        : api.request("GET", `/${modelClass}/retrieve/${String(pk)}/`));
     if (error) {
         console.error("==> RetrieveService ERROR:", error);
         return [null, error];
@@ -109,8 +135,24 @@ const RetrieveService = async (api, modelClass, pk) => {
     return [response, null];
 };
 exports.RetrieveService = RetrieveService;
-const SaveService = async (api, modelClass, body) => {
-    const [response, error] = await safeAwait(api.request("POST", `/${modelClass}/save/`, body));
+/**
+ * Saves (creates or updates) an item for a given model to the API.
+ * @template T - The expected type of the save response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to save to.
+ * @param {Record<any, any>} body - The data to be saved (typically includes all item fields).
+ * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ *
+ * @example
+ * const [savedUser, error] = await SaveService<User>(api, "users", { name: "John", email: "john@example.com" });
+ * if (error) console.error("Failed to save user:", error);
+ * else console.log("Saved user:", savedUser);
+ */
+const SaveService = async (api, modelClass, body, queryParams) => {
+    const [response, error] = await safeAwait(queryParams
+        ? api.request("POST", `/${modelClass}/save/`, body, queryParams)
+        : api.request("POST", `/${modelClass}/save/`, body));
     if (error) {
         console.error("==> SaveService ERROR:", error);
         return [null, error];
@@ -120,11 +162,16 @@ const SaveService = async (api, modelClass, body) => {
 exports.SaveService = SaveService;
 /**
  * Deletes an item for a given model from the API.
- * @template T - The expected type of the delete response data.
+ * @template T - The expected type of the delete response data (defaults to void).
  * @param {ApiService} api - An instance of the ApiService.
  * @param {string} modelClass - The name of the model class to delete from.
  * @param {number} pk - The primary key of the item to delete.
  * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ *
+ * @example
+ * const [result, error] = await DeleteService(api, "users", 123);
+ * if (error) console.error("Failed to delete user:", error);
+ * else console.log("User deleted successfully");
  */
 const DeleteService = async (api, modelClass, pk) => {
     const [response, error] = await safeAwait(api.request("DELETE", `/${modelClass}/delete/${String(pk)}/`));
