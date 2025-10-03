@@ -12,7 +12,7 @@ npm install pumpwood-services
 
 ## Usage
 
-This package provides four main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, and `DeleteService`.
+This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `SaveService`, and `DeleteService`.
 
 ### `safeAwait`
 
@@ -21,7 +21,7 @@ A utility function that wraps a promise and returns a tuple `[data, error]`, avo
 **Example:**
 
 ```typescript
-import { safeAwait } from 'pumpwood-services';
+import { safeAwait } from "pumpwood-services";
 
 async function fetchData() {
   // This might throw an error
@@ -55,12 +55,12 @@ A class for making authenticated requests to your API. It handles setting the ba
 **Example:**
 
 ```typescript
-import { ApiService } from 'pumpwood-services';
+import { ApiService } from "pumpwood-services";
 
 // Configure the ApiService
 const api = new ApiService({
-  baseUrl: 'https://api.yourapp.com/v1',
-  token: 'your-secret-token',
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
 });
 
 async function getUser(userId: number) {
@@ -73,11 +73,11 @@ async function getUser(userId: number) {
 
   try {
     // Make a GET request
-    const user = await api.request<User>('GET', `/users/${userId}/`);
-    console.log('User found:', user);
+    const user = await api.request<User>("GET", `/users/${userId}/`);
+    console.log("User found:", user);
     return user;
   } catch (error) {
-    console.error('Failed to get user:', error.message);
+    console.error("Failed to get user:", error.message);
   }
 }
 
@@ -88,18 +88,27 @@ getUser(123);
 
 A convenience function that uses an `ApiService` instance to fetch a list of resources. It simplifies making `POST` requests to listing endpoints (e.g., `/your-model/list/`).
 
+**Signature:**
+
+```typescript
+ListService<T>(
+  api: ApiService,
+  modelClass: string,
+  body?: any,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]>
+```
+
 **Example:**
 
 ```typescript
-import { ApiService, ListService } from 'pumpwood-services';
+import { ApiService, ListService } from "pumpwood-services";
 
-// Configure the ApiService
 const api = new ApiService({
-  baseUrl: 'https://api.yourapp.com/v1',
-  token: 'your-secret-token',
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
 });
 
-// Define the expected item type in the list
 interface Product {
   id: number;
   name: string;
@@ -107,59 +116,107 @@ interface Product {
 }
 
 async function listProducts() {
-  // The response type is an array of Products
-  const [products, error] = await ListService<Product[]>(api, 'product');
+  const [products, error] = await ListService<Product[]>(api, "product");
 
   if (error) {
-    console.error('Failed to list products:', error.message);
+    console.error("Failed to list products:", error.message);
     return;
   }
 
-  if (products) {
-    console.log('Products:', products);
-  }
+  console.log("Products:", products);
 }
-
-listProducts();
 ```
 
 ### `RetrieveService`
 
 A convenience function that uses an `ApiService` instance to fetch a single resource by its ID. It simplifies making `GET` requests to retrieve endpoints (e.g., `/your-model/retrieve/{id}/`).
 
+**Signature:**
+
+```typescript
+RetrieveService<T>(
+  api: ApiService,
+  modelClass: string,
+  pk: number,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]>
+```
+
 **Example:**
 
 ```typescript
 import { ApiService, RetrieveService } from 'pumpwood-services';
 
-// Configure the ApiService
 const api = new ApiService({
   baseUrl: 'https://api.yourapp.com/v1',
   token: 'your-secret-token',
 });
 
-// Define the expected item type
-interface Product {
+interface User {
   id: number;
+  name: string;
+  email: string;
+};e<User>(
+    api,
+    'users',
+    userId,
+    { foreign_key_fields: 'true', related_fields: 'true' }
+  );
+
+  if (error) {
+    console.error('Failed to get user:', error.message);
+    return;
+  }
+
+  console.log('User:', user);
+}
+```
+
+### `SaveService`
+
+A convenience function that uses an `ApiService` instance to create or update a resource. It simplifies making `POST` requests to save endpoints (e.g., `/your-model/save/`).
+
+**Signature:**
+
+```typescript
+SaveService<T>(
+  api: ApiService,
+  modelClass: string,
+  body: Record<any, any>,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]>
+```
+
+**Example:**
+
+```typescript
+import { ApiService, SaveService } from "pumpwood-services";
+
+const api = new ApiService({
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
+});
+
+interface Product {
+  id?: number;
   name: string;
   price: number;
 }
 
-async function getProduct(productId: number) {
-  // The response type is a single Product
-  const [product, error] = await RetrieveService<Product>(api, 'product', productId);
+async function saveProduct(productData: Product) {
+  const [product, error] = await SaveService<Product>(
+    api,
+    "product",
+    productData
+  );
 
   if (error) {
-    console.error('Failed to get product:', error.message);
+    console.error("Failed to save product:", error.message);
     return;
   }
 
-  if (product) {
-    console.log('Product:', product);
-  }
+  console.log("Product saved:", product);
 }
-
-getProduct(123);
 ```
 
 ### `DeleteService`
@@ -169,36 +226,51 @@ A convenience function that uses an `ApiService` instance to delete a single res
 **Example:**
 
 ```typescript
-import { ApiService, DeleteService } from 'pumpwood-services';
+import { ApiService, DeleteService } from "pumpwood-services";
 
 // Configure the ApiService
 const api = new ApiService({
-  baseUrl: 'https://api.yourapp.com/v1',
-  token: 'your-secret-token',
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
 });
 
 async function deleteProduct(productId: number) {
   // The response type can be void or a confirmation message
-  const [response, error] = await DeleteService(api, 'product', productId);
+  const [response, error] = await DeleteService(api, "product", productId);
 
   if (error) {
-    console.error('Failed to delete product:', error.message);
+    console.error("Failed to delete product:", error.message);
     return;
   }
 
-  console.log('Product deleted successfully');
+  console.log("Product deleted successfully");
 }
 
 deleteProduct(123);
 ```
 
+## Query Parameters
+
+`ListService`, `RetrieveService`, and `SaveService` support optional query parameters as the last parameter. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
+
+**Example:**
+
+```typescript
+const [user, error] = await RetrieveService<User>(api, "users", 123, {
+  foreign_key_fields: "true",
+  related_fields: "true",
+});
+// URL: /users/retrieve/123/?foreign_key_fields=true&related_fields=true
+```
+
 ## API Reference
 
-| Export            | Description                                                                                             |
-|-------------------|---------------------------------------------------------------------------------------------------------|
-| `safeAwait`       | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                            |
-| `ApiService`      | A class to configure and execute authenticated requests against a backend API.                          |
-| `ListService`     | A function to fetch a list of items for a given model using an `ApiService` instance.                   |
-| `RetrieveService` | A function to fetch a single item for a given model using an `ApiService` instance.                     |
-| `DeleteService`   | A function to delete a single item for a given model using an `ApiService` instance.                    |
-| `HttpMethod`      | A type definition for HTTP methods: `"GET" | "POST" | "PUT" | "DELETE"`.                               |
+| Export            | Description                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------------- | ------ | ----- | ---------- |
+| `safeAwait`       | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                        |
+| `ApiService`      | A class to configure and execute authenticated requests against a backend API.                      |
+| `ListService`     | A function to fetch a list of items for a given model. Supports optional body and query parameters. |
+| `RetrieveService` | A function to fetch a single item by ID. Supports optional query parameters.                        |
+| `SaveService`     | A function to create or update an item. Supports optional query parameters.                         |
+| `DeleteService`   | A function to delete a single item by ID.                                                           |
+| `HttpMethod`      | A type definition for HTTP methods: `"GET"                                                          | "POST" | "PUT" | "DELETE"`. |
