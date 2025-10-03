@@ -1,4 +1,3 @@
-
 /**
  * Safely awaits a promise, returning a tuple with either the resolved data or an error.
  * This avoids try/catch blocks and provides type-safe error handling.
@@ -112,6 +111,11 @@ export class ApiService {
  * @param {string} modelClass - The name of the model class to list.
  * @param {Record<any, any>} body - The body of the request as json.
  * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ * 
+ * @example
+ * const [users, error] = await ListService<User[]>(api, "users", { limit: 10 });
+ * if (error) console.error("Failed to fetch users:", error);
+ * else console.log("Users:", users);
  */
 export const ListService = async <T>(
   api: ApiService,
@@ -134,6 +138,19 @@ export const ListService = async <T>(
 };
 
 
+/**
+ * Retrieves a single item by its primary key from the API.
+ * @template T - The expected type of the retrieved item.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to retrieve from.
+ * @param {number} pk - The primary key of the item to retrieve.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ * 
+ * @example
+ * const [user, error] = await RetrieveService<User>(api, "users", 123);
+ * if (error) console.error("Failed to retrieve user:", error);
+ * else console.log("User:", user);
+ */
 export const RetrieveService = async <T>(
   api: ApiService,
   modelClass: string,
@@ -151,6 +168,20 @@ export const RetrieveService = async <T>(
   return [response, null];
 };
 
+
+/**
+ * Saves (creates or updates) an item for a given model to the API.
+ * @template T - The expected type of the save response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to save to.
+ * @param {Record<any, any>} body - The data to be saved (typically includes all item fields).
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ * 
+ * @example
+ * const [savedUser, error] = await SaveService<User>(api, "users", { name: "John", email: "john@example.com" });
+ * if (error) console.error("Failed to save user:", error);
+ * else console.log("Saved user:", savedUser);
+ */
 export const SaveService = async <T>(
   api: ApiService,
   modelClass: string,
@@ -171,11 +202,16 @@ export const SaveService = async <T>(
 
 /**
  * Deletes an item for a given model from the API.
- * @template T - The expected type of the delete response data.
+ * @template T - The expected type of the delete response data (defaults to void).
  * @param {ApiService} api - An instance of the ApiService.
  * @param {string} modelClass - The name of the model class to delete from.
  * @param {number} pk - The primary key of the item to delete.
  * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ * 
+ * @example
+ * const [result, error] = await DeleteService(api, "users", 123);
+ * if (error) console.error("Failed to delete user:", error);
+ * else console.log("User deleted successfully");
  */
 export const DeleteService = async <T = void>(
   api: ApiService,
@@ -193,6 +229,3 @@ export const DeleteService = async <T = void>(
 
   return [response, null];
 };
-
-
-
