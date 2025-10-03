@@ -32,24 +32,27 @@ describe("ListService", () => {
     expect(error?.message).toContain("API Error");
   });
 
-  it("should send body on request", async () => {
+  it("should append query parameters to URL", async () => {
     const mockData = [{ id: 1, name: "Test" }];
-    const body = { any: "thing" };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
+    const queryParams = { 
+      page: "1", 
+      page_size: "10" 
+    };
+
     const [data, error] = await ListService<typeof mockData>(
-      api,
+      api, 
       "activities",
-      body
+      {},
+      queryParams
     );
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.com/activities/list/",
-      expect.objectContaining({
-        body: JSON.stringify(body),
-      })
+      "https://example.com/activities/list/?page=1&page_size=10",
+      expect.anything()
     );
   });
 });
