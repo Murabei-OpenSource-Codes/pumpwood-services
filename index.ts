@@ -110,6 +110,58 @@ export class ApiService {
 
     return response.status === 204 ? null as T : await response.json();
   }
+
+  /**
+   * Performs a file upload request using FormData.
+   * @template T - The expected type of the response data.
+   * @param {string} endpoint - The API endpoint to call.
+   * @param {FormData} formData - The FormData containing the file and other data.
+   * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+   * @returns {Promise<T>} A promise that resolves with the response data.
+   * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
+   */
+  async uploadRequest<T = any>(
+    endpoint: string,
+    formData: FormData,
+    queryParams?: Record<string, string>
+  ): Promise<T> {
+    if (!this.baseUrl) {
+      throw new Error(
+        "ApiService: baseUrl is missing. Ensure it is provided when creating the ApiService instance."
+      );
+    }
+
+    let url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(
+      /^\//,
+      ""
+    )}`;
+    
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const queryString = new URLSearchParams(queryParams).toString();
+      url = `${url}?${queryString}`;
+    }
+    
+    
+    // Note: Don't set Content-Type header for FormData - browser will set it automatically with boundary
+    const headers: HeadersInit = {
+      Authorization: `Token ${this.token}`,
+    };
+
+    const options: RequestInit = { 
+      method: "POST", 
+      headers,
+      body: formData
+    };
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    return response.status === 204 ? null as T : await response.json();
+  }
 }
 
 
@@ -240,6 +292,59 @@ export const DeleteService = async <T = void>(
 
   if (error) {
     console.error("==> DeleteService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
+
+/**
+ * Uploads a file with associated JSON data for a given model to the API.
+ * @template T - The expected type of the upload response data.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to upload to.
+ * @param {File} file - The file to be uploaded.
+ * @param {Record<string, any>} jsonData - Additional JSON data to be sent with the file.
+ * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
+ * 
+ * @example
+ * const file = document.querySelector('input[type="file"]').files[0];
+ * const [result, error] = await UploadFileService(
+ *   api, 
+ *   "documents", 
+ *   file, 
+ *   { origin: "USER_UPLOAD", format_type: "MELTED" }
+ * );
+ * if (error) console.error("Failed to upload file:", error);
+ * else console.log("File uploaded successfully:", result);
+ */
+export const UploadFileService = async <T>(
+  api: ApiService,
+  modelClass: string,
+  file: File,
+  jsonData: Record<string, any>,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]> => {
+  if (!file) {
+    const error = new Error("UploadFileService: file is required");
+    console.error("==> UploadFileService ERROR:", error);
+    return [null, error];
+  }
+
+  const formData = new FormData();
+  formData.append("__json__", JSON.stringify(jsonData));
+  formData.append("file", file);
+
+  const [response, error] = await safeAwait(
+    queryParams
+      ? api.uploadRequest<T>(`/${modelClass}/save/`, formData, queryParams)
+      : api.uploadRequest<T>(`/${modelClass}/save/`, formData)
+  );
+
+  if (error) {
+    console.error("==> UploadFileService ERROR:", error);
     return [null, error];
   }
 
