@@ -12,7 +12,7 @@ npm install pumpwood-services
 
 ## Usage
 
-This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `SaveService`, and `DeleteService`.
+This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `SaveService`, `DeleteService`, and `UploadFileService`.
 
 ### `safeAwait`
 
@@ -249,9 +249,78 @@ async function deleteProduct(productId: number) {
 deleteProduct(123);
 ```
 
+### `UploadFileService`
+
+A convenience function that uses an `ApiService` instance to upload a file with associated JSON data. It simplifies making file upload requests to save endpoints (e.g., `/your-model/save/`).
+
+**Signature:**
+
+```typescript
+UploadFileService<T>(
+  api: ApiService,
+  modelClass: string,
+  file: File,
+  jsonData: Record<string, any>,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]>
+```
+
+**Example:**
+
+```typescript
+import { ApiService, UploadFileService } from "pumpwood-services";
+
+const api = new ApiService({
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
+});
+
+interface UploadResponse {
+  id: number;
+  filename: string;
+  url: string;
+}
+
+async function uploadDocument(file: File) {
+  const jsonData = {
+    origin: "USER_UPLOAD",
+    format_type: "MELTED",
+    description: "Important document",
+  };
+
+  const [response, error] = await UploadFileService<UploadResponse>(
+    api,
+    "documents",
+    file,
+    jsonData
+  );
+
+  if (error) {
+    console.error("Failed to upload file:", error.message);
+    return;
+  }
+
+  console.log("File uploaded successfully:", response);
+}
+
+// Usage with file input
+const fileInput = document.querySelector('input[type="file"]');
+fileInput?.addEventListener('change', (e) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) {
+    uploadDocument(file);
+  }
+});
+```
+
+**Notes:**
+- The file is sent as `FormData` with the file attached as `"file"` and the JSON data as `"__json__"` (stringified).
+- The `Content-Type` header is automatically set by the browser to `multipart/form-data` with the appropriate boundary.
+- This follows the Pumpwood backend convention for file uploads.
+
 ## Query Parameters
 
-`ListService`, `RetrieveService`, and `SaveService` support optional query parameters as the last parameter. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
+`ListService`, `RetrieveService`, `SaveService`, and `UploadFileService` support optional query parameters as the last parameter. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
 
 **Example:**
 
@@ -265,12 +334,13 @@ const [user, error] = await RetrieveService<User>(api, "users", 123, {
 
 ## API Reference
 
-| Export            | Description                                                                                         |
-| ----------------- | --------------------------------------------------------------------------------------------------- | ------ | ----- | ---------- |
-| `safeAwait`       | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                        |
-| `ApiService`      | A class to configure and execute authenticated requests against a backend API.                      |
-| `ListService`     | A function to fetch a list of items for a given model. Supports optional body and query parameters. |
-| `RetrieveService` | A function to fetch a single item by ID. Supports optional query parameters.                        |
-| `SaveService`     | A function to create or update an item. Supports optional query parameters.                         |
-| `DeleteService`   | A function to delete a single item by ID.                                                           |
-| `HttpMethod`      | A type definition for HTTP methods: `"GET"                                                          | "POST" | "PUT" | "DELETE"`. |
+| Export              | Description                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `safeAwait`         | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                        |
+| `ApiService`        | A class to configure and execute authenticated requests against a backend API.                      |
+| `ListService`       | A function to fetch a list of items for a given model. Supports optional body and query parameters. |
+| `RetrieveService`   | A function to fetch a single item by ID. Supports optional query parameters.                        |
+| `SaveService`       | A function to create or update an item. Supports optional query parameters.                         |
+| `DeleteService`     | A function to delete a single item by ID.                                                           |
+| `UploadFileService` | A function to upload a file with JSON data to a model endpoint. Supports optional query parameters. |
+| `HttpMethod`        | A type definition for HTTP methods: `"GET" \| "POST" \| "PUT" \| "DELETE"`.                         |
