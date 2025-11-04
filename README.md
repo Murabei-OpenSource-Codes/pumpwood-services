@@ -12,7 +12,7 @@ npm install pumpwood-services
 
 ## Usage
 
-This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `SaveService`, `DeleteService`, and `UploadFileService`.
+This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `RetrieveFileService`, `SaveService`, `DeleteService`, and `UploadFileService`.
 
 ### `safeAwait`
 
@@ -172,6 +172,75 @@ interface User {
 }
 ```
 
+### `RetrieveFileService`
+
+A convenience function that uses an `ApiService` instance to download a file from a resource. It retrieves the file as serializable data (`IFileData`) that works in both client and server environments (SSR compatible).
+
+**Signature:**
+
+```typescript
+RetrieveFileService(
+  api: ApiService,
+  modelClass: string,
+  pk: number,
+  fileField?: string
+): Promise<[IFileData | null, Error | null]>
+```
+
+**IFileData Interface:**
+
+```typescript
+interface IFileData {
+  data: number[];      // Array of file bytes
+  contentType: string; // File MIME type
+}
+```
+
+**Example:**
+
+```typescript
+import { ApiService, RetrieveFileService, IFileData } from 'pumpwood-services';
+
+const api = new ApiService({
+  baseUrl: 'https://api.yourapp.com/v1',
+  token: 'your-secret-token',
+});
+
+async function downloadDocument(documentId: number) {
+  const [fileData, error] = await RetrieveFileService(
+    api,
+    'documents',
+    documentId,
+    'file' // optional, defaults to 'file'
+  );
+
+  if (error) {
+    console.error('Failed to download file:', error.message);
+    return;
+  }
+
+  // Convert back to Blob on client-side
+  const blob = new Blob(
+    [new Uint8Array(fileData.data)], 
+    { type: fileData.contentType }
+  );
+  
+  // Create URL and trigger download
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'document.pdf';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+```
+
+**Notes:**
+- The file is returned as `IFileData` (array of numbers + contentType) to be serializable in SSR/Next.js
+- The endpoint called is `/{modelClass}/retrieve-file/{pk}/?file-field={fileField}`
+- The `fileField` defaults to `"file"` if not specified
+- To use the file in the browser, convert back to `Blob` using `new Uint8Array(fileData.data)`
+
 ### `SaveService`
 
 A convenience function that uses an `ApiService` instance to create or update a resource. It simplifies making `POST` requests to save endpoints (e.g., `/your-model/save/`).
@@ -320,7 +389,7 @@ fileInput?.addEventListener('change', (e) => {
 
 ## Query Parameters
 
-`ListService`, `RetrieveService`, `SaveService`, and `UploadFileService` support optional query parameters as the last parameter. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
+`ListService`, `RetrieveService`, `RetrieveFileService`, `SaveService`, and `UploadFileService` support optional query parameters. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
 
 **Example:**
 
@@ -334,13 +403,15 @@ const [user, error] = await RetrieveService<User>(api, "users", 123, {
 
 ## API Reference
 
-| Export              | Description                                                                                         |
-| ------------------- | --------------------------------------------------------------------------------------------------- |
-| `safeAwait`         | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                        |
-| `ApiService`        | A class to configure and execute authenticated requests against a backend API.                      |
-| `ListService`       | A function to fetch a list of items for a given model. Supports optional body and query parameters. |
-| `RetrieveService`   | A function to fetch a single item by ID. Supports optional query parameters.                        |
-| `SaveService`       | A function to create or update an item. Supports optional query parameters.                         |
-| `DeleteService`     | A function to delete a single item by ID.                                                           |
-| `UploadFileService` | A function to upload a file with JSON data to a model endpoint. Supports optional query parameters. |
-| `HttpMethod`        | A type definition for HTTP methods: `"GET" \| "POST" \| "PUT" \| "DELETE"`.                         |
+| Export                | Description                                                                                         |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| `safeAwait`           | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                        |
+| `ApiService`          | A class to configure and execute authenticated requests against a backend API.                      |
+| `ListService`         | A function to fetch a list of items for a given model. Supports optional body and query parameters. |
+| `RetrieveService`     | A function to fetch a single item by ID. Supports optional query parameters.                        |
+| `RetrieveFileService` | A function to download a file from a resource. Returns serializable `IFileData` (SSR compatible).   |
+| `SaveService`         | A function to create or update an item. Supports optional query parameters.                         |
+| `DeleteService`       | A function to delete a single item by ID.                                                           |
+| `UploadFileService`   | A function to upload a file with JSON data to a model endpoint. Supports optional query parameters. |
+| `IFileData`           | Interface for file data: `{ data: number[], contentType: string }`.                                 |
+| `HttpMethod`          | A type definition for HTTP methods: `"GET" \| "POST" \| "PUT" \| "DELETE"`.                         |

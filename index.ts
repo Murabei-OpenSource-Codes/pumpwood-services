@@ -36,6 +36,11 @@ export async function safeAwait<T, E = Error>(
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
+export interface IFileData {
+  data: number[];
+  contentType: string;
+}
+
 export interface ApiServiceConfig {
   baseUrl: string;
   token: string;
@@ -92,7 +97,7 @@ export class ApiService {
       url = `${url}?${queryString}`;
     }
     
-    console.log("==> url: " + url);
+    
     const headers: HeadersInit = {
       Authorization: `Token ${this.token}`,
       "Content-Type": "application/json",
@@ -162,6 +167,59 @@ export class ApiService {
 
     return response.status === 204 ? null as T : await response.json();
   }
+
+  /**
+   * Performs a file download request.
+   * @param {string} endpoint - The API endpoint to call.
+   * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+   * @returns {Promise<IFileData>} A promise that resolves with the file data (serializável para SSR).
+   * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
+   */
+  async fileRequest(
+    endpoint: string,
+    queryParams?: Record<string, string>
+  ): Promise<IFileData> {
+    if (!this.baseUrl) {
+      throw new Error(
+        "ApiService: baseUrl is missing. Ensure it is provided when creating the ApiService instance."
+      );
+    }
+
+    let url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(
+      /^\//,
+      ""
+    )}`;
+    
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const queryString = new URLSearchParams(queryParams).toString();
+      url = `${url}?${queryString}`;
+    }
+    
+  
+    const headers: HeadersInit = {
+      Authorization: `Token ${this.token}`,
+    };
+
+    const options: RequestInit = { 
+      method: "GET", 
+      headers 
+    };
+
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    
+    return {
+      data: Array.from(new Uint8Array(arrayBuffer)),
+      contentType: blob.type,
+    };
+  }
 }
 
 
@@ -226,6 +284,50 @@ export const RetrieveService = async <T>(
 
   if (error) {
     console.error("==> RetrieveService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
+
+/**
+ * Retrieves a file for a given model from the API.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to retrieve from.
+ * @param {number} pk - The primary key of the item to retrieve.
+ * @param {string} fileField - The name of the file field to retrieve (default: "file").
+ * @returns {Promise<[IFileData | null, Error | null]>} A tuple containing the file data (serializável) or an error.
+ * 
+ * @example
+ * const [fileData, error] = await RetrieveFileService(api, "documents", 123, "file");
+ * if (error) console.error("Failed to retrieve file:", error);
+ * else {
+ *   const blob = new Blob([new Uint8Array(fileData.data)], { type: fileData.contentType });
+ *   const url = URL.createObjectURL(blob);
+ *   window.open(url);
+ * }
+ */
+export const RetrieveFileService = async (
+  api: ApiService,
+  modelClass: string,
+  pk: number,
+  fileField: string = "file"
+): Promise<[IFileData | null, Error | null]> => {
+  if (!fileField) {
+    const error = new Error("RetrieveFileService: fileField is required");
+    console.error("==> RetrieveFileService ERROR:", error);
+    return [null, error];
+  }
+
+  const queryParams = { "file-field": fileField };
+  
+  const [response, error] = await safeAwait(
+    api.fileRequest(`/${modelClass}/retrieve-file/${String(pk)}/`, queryParams)
+  );
+
+  if (error) {
+    console.error("==> RetrieveFileService ERROR:", error);
     return [null, error];
   }
 
