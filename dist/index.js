@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UploadFileService = exports.DeleteService = exports.SaveService = exports.RetrieveService = exports.ListService = exports.ApiService = void 0;
+exports.UploadFileService = exports.DeleteService = exports.SaveService = exports.RetrieveFileService = exports.RetrieveService = exports.ListService = exports.ApiService = void 0;
 exports.safeAwait = safeAwait;
 /**
  * Safely awaits a promise, returning a tuple with either the resolved data or an error.
@@ -71,7 +71,6 @@ class ApiService {
             const queryString = new URLSearchParams(queryParams).toString();
             url = `${url}?${queryString}`;
         }
-        console.log("==> url: " + url);
         const headers = {
             Authorization: `Token ${this.token}`,
             "Content-Type": "application/json",
@@ -119,6 +118,41 @@ class ApiService {
             throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
         }
         return response.status === 204 ? null : await response.json();
+    }
+    /**
+     * Performs a file download request.
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+     * @returns {Promise<IFileData>} A promise that resolves with the file data (serializável para SSR).
+     * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
+     */
+    async fileRequest(endpoint, queryParams) {
+        if (!this.baseUrl) {
+            throw new Error("ApiService: baseUrl is missing. Ensure it is provided when creating the ApiService instance.");
+        }
+        let url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
+        if (queryParams && Object.keys(queryParams).length > 0) {
+            const queryString = new URLSearchParams(queryParams).toString();
+            url = `${url}?${queryString}`;
+        }
+        const headers = {
+            Authorization: `Token ${this.token}`,
+        };
+        const options = {
+            method: "GET",
+            headers
+        };
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        return {
+            data: Array.from(new Uint8Array(arrayBuffer)),
+            contentType: blob.type,
+        };
     }
 }
 exports.ApiService = ApiService;
@@ -169,6 +203,38 @@ const RetrieveService = async (api, modelClass, pk, queryParams) => {
     return [response, null];
 };
 exports.RetrieveService = RetrieveService;
+/**
+ * Retrieves a file for a given model from the API.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to retrieve from.
+ * @param {number} pk - The primary key of the item to retrieve.
+ * @param {string} fileField - The name of the file field to retrieve (default: "file").
+ * @returns {Promise<[IFileData | null, Error | null]>} A tuple containing the file data (serializável) or an error.
+ *
+ * @example
+ * const [fileData, error] = await RetrieveFileService(api, "documents", 123, "file");
+ * if (error) console.error("Failed to retrieve file:", error);
+ * else {
+ *   const blob = new Blob([new Uint8Array(fileData.data)], { type: fileData.contentType });
+ *   const url = URL.createObjectURL(blob);
+ *   window.open(url);
+ * }
+ */
+const RetrieveFileService = async (api, modelClass, pk, fileField = "file") => {
+    if (!fileField) {
+        const error = new Error("RetrieveFileService: fileField is required");
+        console.error("==> RetrieveFileService ERROR:", error);
+        return [null, error];
+    }
+    const queryParams = { "file-field": fileField };
+    const [response, error] = await safeAwait(api.fileRequest(`/${modelClass}/retrieve-file/${String(pk)}/`, queryParams));
+    if (error) {
+        console.error("==> RetrieveFileService ERROR:", error);
+        return [null, error];
+    }
+    return [response, null];
+};
+exports.RetrieveFileService = RetrieveFileService;
 /**
  * Saves (creates or updates) an item for a given model to the API.
  * @template T - The expected type of the save response data.

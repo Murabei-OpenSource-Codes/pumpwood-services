@@ -24,6 +24,10 @@
  */
 export declare function safeAwait<T, E = Error>(promise: Promise<T>): Promise<[T, null] | [null, E]>;
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+export interface IFileData {
+    data: number[];
+    contentType: string;
+}
 export interface ApiServiceConfig {
     baseUrl: string;
     token: string;
@@ -59,6 +63,14 @@ export declare class ApiService {
      * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
      */
     uploadRequest<T = any>(endpoint: string, formData: FormData, queryParams?: Record<string, string>): Promise<T>;
+    /**
+     * Performs a file download request.
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+     * @returns {Promise<IFileData>} A promise that resolves with the file data (serializável para SSR).
+     * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
+     */
+    fileRequest(endpoint: string, queryParams?: Record<string, string>): Promise<IFileData>;
 }
 /**
  * Fetches a list of items for a given model from the API.
@@ -85,6 +97,24 @@ export declare const ListService: <T>(api: ApiService, modelClass: string, body?
  * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error, consistent with safeAwait.
  */
 export declare const RetrieveService: <T>(api: ApiService, modelClass: string, pk: number, queryParams?: Record<string, string>) => Promise<[T | null, Error | null]>;
+/**
+ * Retrieves a file for a given model from the API.
+ * @param {ApiService} api - An instance of the ApiService.
+ * @param {string} modelClass - The name of the model class to retrieve from.
+ * @param {number} pk - The primary key of the item to retrieve.
+ * @param {string} fileField - The name of the file field to retrieve (default: "file").
+ * @returns {Promise<[IFileData | null, Error | null]>} A tuple containing the file data (serializável) or an error.
+ *
+ * @example
+ * const [fileData, error] = await RetrieveFileService(api, "documents", 123, "file");
+ * if (error) console.error("Failed to retrieve file:", error);
+ * else {
+ *   const blob = new Blob([new Uint8Array(fileData.data)], { type: fileData.contentType });
+ *   const url = URL.createObjectURL(blob);
+ *   window.open(url);
+ * }
+ */
+export declare const RetrieveFileService: (api: ApiService, modelClass: string, pk: number, fileField?: string) => Promise<[IFileData | null, Error | null]>;
 /**
  * Saves (creates or updates) an item for a given model to the API.
  * @template T - The expected type of the save response data.
