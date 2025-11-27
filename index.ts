@@ -37,7 +37,7 @@ export async function safeAwait<T, E = Error>(
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export interface IFileData {
-  data: number[];
+  blob: Blob;
   contentType: string;
 }
 
@@ -170,9 +170,11 @@ export class ApiService {
 
   /**
    * Performs a file download request.
+   * Returns a Blob that allows the caller to manage URL lifecycle (create/revoke).
+   * ⚠️ NOT SERIALIZABLE for SSR - blob must be used on the same side (client or server).
    * @param {string} endpoint - The API endpoint to call.
    * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
-   * @returns {Promise<IFileData>} A promise that resolves with the file data (serializável para SSR).
+   * @returns {Promise<IFileData>} A promise that resolves with the file data (blob).
    * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
    */
   async fileRequest(
@@ -213,10 +215,9 @@ export class ApiService {
     }
 
     const blob = await response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
     
     return {
-      data: Array.from(new Uint8Array(arrayBuffer)),
+      blob: blob,
       contentType: blob.type,
     };
   }
@@ -293,19 +294,22 @@ export const RetrieveService = async <T>(
 
 /**
  * Retrieves a file for a given model from the API.
+ * Returns a Blob that allows the caller to manage URL lifecycle (create/revoke).
+ * ⚠️ NOT SERIALIZABLE for SSR - use only on client-side or same-side server operations.
  * @param {ApiService} api - An instance of the ApiService.
  * @param {string} modelClass - The name of the model class to retrieve from.
  * @param {number} pk - The primary key of the item to retrieve.
  * @param {string} fileField - The name of the file field to retrieve (default: "file").
- * @returns {Promise<[IFileData | null, Error | null]>} A tuple containing the file data (serializável) or an error.
+ * @returns {Promise<[IFileData | null, Error | null]>} A tuple containing the file data (blob) or an error.
  * 
  * @example
  * const [fileData, error] = await RetrieveFileService(api, "documents", 123, "file");
  * if (error) console.error("Failed to retrieve file:", error);
  * else {
- *   const blob = new Blob([new Uint8Array(fileData.data)], { type: fileData.contentType });
- *   const url = URL.createObjectURL(blob);
+ *   const url = URL.createObjectURL(fileData.blob);
  *   window.open(url);
+ *   // Don't forget to revoke when done:
+ *   URL.revokeObjectURL(url);
  * }
  */
 export const RetrieveFileService = async (
