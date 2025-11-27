@@ -34,7 +34,7 @@ describe("RetrieveFileService", () => {
 
     expect(error).toBeNull();
     expect(fileData).not.toBeNull();
-    expect(fileData?.data).toEqual(Array.from(fileContent));
+    expect(fileData?.blob).toBe(blob);
     expect(fileData?.contentType).toBe("text/plain");
     expect(global.fetch).toHaveBeenCalledWith(
       "https://example.com/documents/retrieve-file/123/?file-field=file",
@@ -111,7 +111,7 @@ describe("RetrieveFileService", () => {
 
     expect(error).toBeNull();
     expect(fileData?.contentType).toBe("application/pdf");
-    expect(fileData?.data).toEqual(Array.from(pdfContent));
+    expect(fileData?.blob).toBe(blob);
     expect(global.fetch).toHaveBeenCalledWith(
       "https://example.com/reports/retrieve-file/789/?file-field=pdf_file",
       expect.anything()
@@ -131,7 +131,7 @@ describe("RetrieveFileService", () => {
     expect(error?.message).toContain("fileField is required");
   });
 
-  it("should return serializable data for SSR", async () => {
+  it("should return blob for client-side usage", async () => {
     const imageContent = new Uint8Array([255, 216, 255, 224]); // JPEG header
     const blob = new Blob([imageContent], { type: "image/jpeg" });
     
@@ -151,11 +151,9 @@ describe("RetrieveFileService", () => {
     expect(error).toBeNull();
     expect(fileData).not.toBeNull();
     
-    // Verifica que é serializável (pode ser convertido para JSON)
-    const serialized = JSON.stringify(fileData);
-    const deserialized: IFileData = JSON.parse(serialized);
-    
-    expect(deserialized.data).toEqual(fileData?.data);
-    expect(deserialized.contentType).toBe(fileData?.contentType);
+    // Verifica que retorna blob diretamente
+    expect(fileData?.blob).toBe(blob);
+    expect(fileData?.blob).toBeInstanceOf(Blob);
+    expect(fileData?.contentType).toBe("image/jpeg");
   });
 });
