@@ -12,7 +12,7 @@ npm install pumpwood-services
 
 ## Usage
 
-This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `RetrieveFileService`, `SaveService`, `DeleteService`, and `UploadFileService`.
+This package provides main exports: `safeAwait`, `ApiService`, `ListService`, `RetrieveService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, and `ExecuteStaticActionService`.
 
 ### `safeAwait`
 
@@ -191,7 +191,7 @@ RetrieveFileService(
 
 ```typescript
 interface IFileData {
-  data: number[];      // Array of file bytes
+  data: number[]; // Array of file bytes
   contentType: string; // File MIME type
 }
 ```
@@ -199,43 +199,43 @@ interface IFileData {
 **Example:**
 
 ```typescript
-import { ApiService, RetrieveFileService, IFileData } from 'pumpwood-services';
+import { ApiService, RetrieveFileService, IFileData } from "pumpwood-services";
 
 const api = new ApiService({
-  baseUrl: 'https://api.yourapp.com/v1',
-  token: 'your-secret-token',
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
 });
 
 async function downloadDocument(documentId: number) {
   const [fileData, error] = await RetrieveFileService(
     api,
-    'documents',
+    "documents",
     documentId,
-    'file' // optional, defaults to 'file'
+    "file" // optional, defaults to 'file'
   );
 
   if (error) {
-    console.error('Failed to download file:', error.message);
+    console.error("Failed to download file:", error.message);
     return;
   }
 
   // Convert back to Blob on client-side
-  const blob = new Blob(
-    [new Uint8Array(fileData.data)], 
-    { type: fileData.contentType }
-  );
-  
+  const blob = new Blob([new Uint8Array(fileData.data)], {
+    type: fileData.contentType,
+  });
+
   // Create URL and trigger download
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
-  link.download = 'document.pdf';
+  link.download = "document.pdf";
   link.click();
   URL.revokeObjectURL(url);
 }
 ```
 
 **Notes:**
+
 - The file is returned as `IFileData` (array of numbers + contentType) to be serializable in SSR/Next.js
 - The endpoint called is `/{modelClass}/retrieve-file/{pk}/?file-field={fileField}`
 - The `fileField` defaults to `"file"` if not specified
@@ -374,7 +374,7 @@ async function uploadDocument(file: File) {
 
 // Usage with file input
 const fileInput = document.querySelector('input[type="file"]');
-fileInput?.addEventListener('change', (e) => {
+fileInput?.addEventListener("change", (e) => {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (file) {
     uploadDocument(file);
@@ -383,13 +383,135 @@ fileInput?.addEventListener('change', (e) => {
 ```
 
 **Notes:**
+
 - The file is sent as `FormData` with the file attached as `"file"` and the JSON data as `"__json__"` (stringified).
 - The `Content-Type` header is automatically set by the browser to `multipart/form-data` with the appropriate boundary.
 - This follows the Pumpwood backend convention for file uploads.
 
+### `ExecuteActionService`
+
+A convenience function that uses an `ApiService` instance to execute custom actions on model instances. Actions are custom methods defined on Pumpwood models that perform specific operations beyond standard CRUD.
+
+**Signature:**
+
+```typescript
+ExecuteActionService<T>(
+  api: ApiService,
+  modelClass: string,
+  pk: number,
+  actionName: string,
+  parameters?: Record<string, any>,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]>
+```
+
+**Example:**
+
+```typescript
+import { ApiService, ExecuteActionService } from "pumpwood-services";
+
+const api = new ApiService({
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
+});
+
+interface ReviewResponse {
+  status: string;
+  message: string;
+  approved_by: string;
+}
+
+async function reviewMaterial(activityId: number, newStatus: string) {
+  const [result, error] = await ExecuteActionService<ReviewResponse>({
+    api: api,
+    modelClass: "MaterialApprovalActivity",
+    pk: activityId,
+    actionName: "review",
+    parameters: {
+      new_status: newStatus,
+      comment: "Approved after review",
+    },
+  });
+
+  if (error) {
+    console.error("Failed to execute action:", error.message);
+    return;
+  }
+
+  console.log("Action executed successfully:", result);
+}
+
+reviewMaterial(123, "approved");
+```
+
+**Notes:**
+
+- The endpoint called is `/{modelClass}/actions/{actionName}/{pk}/`
+- Parameters are sent in the request body as JSON
+- Validates that `modelClass` and `actionName` are provided
+- Can be used with `pk=0` for static/class-level actions
+
+### `ExecuteStaticActionService`
+
+A convenience wrapper around `ExecuteActionService` for executing static actions that don't require a specific instance. This automatically sets `pk=0`.
+
+**Signature:**
+
+```typescript
+ExecuteStaticActionService<T>(
+  api: ApiService,
+  modelClass: string,
+  actionName: string,
+  parameters?: Record<string, any>,
+  queryParams?: Record<string, string>
+): Promise<[T | null, Error | null]>
+```
+
+**Example:**
+
+```typescript
+import { ApiService, ExecuteStaticActionService } from "pumpwood-services";
+
+const api = new ApiService({
+  baseUrl: "https://api.yourapp.com/v1",
+  token: "your-secret-token",
+});
+
+interface Statistics {
+  total: number;
+  approved: number;
+  rejected: number;
+  pending: number;
+}
+
+async function getYearlyStatistics(year: number) {
+  const [stats, error] = await ExecuteStaticActionService<Statistics>({
+    api: api,
+    modelClass: "MaterialApprovalActivity",
+    actionName: "get_statistics",
+    parameters: { year },
+  });
+
+  if (error) {
+    console.error("Failed to get statistics:", error.message);
+    return;
+  }
+
+  console.log(`Statistics for ${year}:`, stats);
+}
+
+getYearlyStatistics(2024);
+```
+
+**Notes:**
+
+- This is equivalent to calling `ExecuteActionService` with `pk=0`
+- Useful for class-level actions that don't operate on a specific instance
+- The endpoint called is `/{modelClass}/actions/{actionName}/0/`
+
 ## Query Parameters
 
-`ListService`, `RetrieveService`, `RetrieveFileService`, `SaveService`, and `UploadFileService` support optional query parameters. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
+`ListService`, `RetrieveService`, `RetrieveFileService`, `SaveService`, `UploadFileService`, `ExecuteActionService`, and `ExecuteStaticActionService` support optional query parameters. Query parameters are passed as a `Record<string, string>` object and are automatically URL-encoded.
 
 **Example:**
 
@@ -403,15 +525,17 @@ const [user, error] = await RetrieveService<User>(api, "users", 123, {
 
 ## API Reference
 
-| Export                | Description                                                                                         |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| `safeAwait`           | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                        |
-| `ApiService`          | A class to configure and execute authenticated requests against a backend API.                      |
-| `ListService`         | A function to fetch a list of items for a given model. Supports optional body and query parameters. |
-| `RetrieveService`     | A function to fetch a single item by ID. Supports optional query parameters.                        |
-| `RetrieveFileService` | A function to download a file from a resource. Returns serializable `IFileData` (SSR compatible).   |
-| `SaveService`         | A function to create or update an item. Supports optional query parameters.                         |
-| `DeleteService`       | A function to delete a single item by ID.                                                           |
-| `UploadFileService`   | A function to upload a file with JSON data to a model endpoint. Supports optional query parameters. |
-| `IFileData`           | Interface for file data: `{ data: number[], contentType: string }`.                                 |
-| `HttpMethod`          | A type definition for HTTP methods: `"GET" \| "POST" \| "PUT" \| "DELETE"`.                         |
+| Export                       | Description                                                                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `safeAwait`                  | Wraps an async call in a try/catch block, returning a `[data, error]` tuple.                                                  |
+| `ApiService`                 | A class to configure and execute authenticated requests against a backend API.                                                |
+| `ListService`                | A function to fetch a list of items for a given model. Supports optional body and query parameters.                           |
+| `RetrieveService`            | A function to fetch a single item by ID. Supports optional query parameters.                                                  |
+| `RetrieveFileService`        | A function to download a file from a resource. Returns serializable `IFileData` (SSR compatible).                             |
+| `SaveService`                | A function to create or update an item. Supports optional query parameters.                                                   |
+| `DeleteService`              | A function to delete a single item by ID.                                                                                     |
+| `UploadFileService`          | A function to upload a file with JSON data to a model endpoint. Supports optional query parameters.                           |
+| `ExecuteActionService`       | A function to execute custom actions on model instances. Supports optional parameters and query parameters.                   |
+| `ExecuteStaticActionService` | A function to execute static actions on model classes (wrapper with pk=0). Supports optional parameters and query parameters. |
+| `IFileData`                  | Interface for file data: `{ data: number[], contentType: string }`.                                                           |
+| `HttpMethod`                 | A type definition for HTTP methods: `"GET" \| "POST" \| "PUT" \| "DELETE"`.                                                   |

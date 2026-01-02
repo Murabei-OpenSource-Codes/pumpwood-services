@@ -456,3 +456,154 @@ export const UploadFileService = async <T>(
 
   return [response, null];
 };
+
+
+/**
+ * Executes an action on a model instance.
+ *
+ * Actions are custom methods defined on Pumpwood models that perform specific operations.
+ * This service calls the action endpoint with the provided parameters.
+ *
+ * @template T - The expected type of the action response data.
+ * @param {object} params - The parameters object.
+ * @param {ApiService} params.api - An instance of the ApiService.
+ * @param {string} params.modelClass - The name of the model class to execute the action on.
+ * @param {number} params.pk - The primary key of the item to execute the action on.
+ * @param {string} params.actionName - The name of the action to execute.
+ * @param {Record<string, any>} [params.parameters] - Optional parameters to pass to the action.
+ * @param {Record<string, string>} [params.queryParams] - Optional query parameters to append to the URL.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error.
+ *
+ * @example
+ * const [result, error] = await ExecuteActionService({
+ *   api: api,
+ *   modelClass: "MaterialApprovalActivity",
+ *   pk: 123,
+ *   actionName: "review",
+ *   parameters: { new_status: "approved" }
+ * });
+ * if (error) console.error("Failed to execute action:", error);
+ * else console.log("Action executed successfully:", result);
+ *
+ * @example
+ * const [result, error] = await ExecuteActionService({
+ *   api: api,
+ *   modelClass: "MaterialApprovalActivity",
+ *   pk: 0,
+ *   actionName: "get_statistics",
+ *   parameters: { year: 2024 }
+ * });
+ */
+export const ExecuteActionService = async <T = any>({
+  api,
+  modelClass,
+  pk,
+  actionName,
+  parameters,
+  queryParams,
+}: {
+  api: ApiService;
+  modelClass: string;
+  pk: number;
+  actionName: string;
+  parameters?: Record<string, any>;
+  queryParams?: Record<string, string>;
+}): Promise<[T | null, Error | null]> => {
+  if (!modelClass) {
+    const error = new Error("ExecuteActionService: modelClass is required");
+    console.error("==> ExecuteActionService ERROR:", error);
+    return [null, error];
+  }
+
+  if (!actionName) {
+    const error = new Error("ExecuteActionService: actionName is required");
+    console.error("==> ExecuteActionService ERROR:", error);
+    return [null, error];
+  }
+
+  const requestBody = parameters || {};
+
+  const [response, error] = await safeAwait(
+    queryParams
+      ? api.request<T>(
+          "POST",
+          `/${modelClass}/actions/${actionName}/${String(pk)}/`,
+          requestBody,
+          queryParams
+        )
+      : api.request<T>(
+          "POST",
+          `/${modelClass}/actions/${actionName}/${String(pk)}/`,
+          requestBody
+        )
+  );
+
+  if (error) {
+    console.error("==> ExecuteActionService ERROR:", error);
+    return [null, error];
+  }
+
+  return [response, null];
+};
+
+
+/**
+ * Executes a static action on a model class (no instance required).
+ *
+ * Static actions are class-level methods that don't require a specific instance.
+ * This is a convenience wrapper around ExecuteActionService with pk=0.
+ *
+ * @template T - The expected type of the action response data.
+ * @param {object} params - The parameters object.
+ * @param {ApiService} params.api - An instance of the ApiService.
+ * @param {string} params.modelClass - The name of the model class to execute the action on.
+ * @param {string} params.actionName - The name of the static action to execute.
+ * @param {Record<string, any>} [params.parameters] - Optional parameters to pass to the action.
+ * @param {Record<string, string>} [params.queryParams] - Optional query parameters to append to the URL.
+ * @returns {Promise<[T | null, Error | null]>} A tuple containing the response data or an error.
+ *
+ * @example
+ * const [stats, error] = await ExecuteStaticActionService({
+ *   api: api,
+ *   modelClass: "MaterialApprovalActivity",
+ *   actionName: "get_statistics",
+ *   parameters: { year: 2024 }
+ * });
+ */
+export const ExecuteStaticActionService = async <T = any>({
+  api,
+  modelClass,
+  actionName,
+  parameters,
+  queryParams,
+}: {
+  api: ApiService;
+  modelClass: string;
+  actionName: string;
+  parameters?: Record<string, any>;
+  queryParams?: Record<string, string>;
+}): Promise<[T | null, Error | null]> => {
+  const params: {
+    api: ApiService;
+    modelClass: string;
+    pk: number;
+    actionName: string;
+    parameters?: Record<string, any>;
+    queryParams?: Record<string, string>;
+  } = {
+    api,
+    modelClass,
+    pk: 0,
+    actionName,
+  };
+
+  if (parameters !== undefined) {
+    params.parameters = parameters;
+  }
+
+  if (queryParams !== undefined) {
+    params.queryParams = queryParams;
+  }
+
+  return ExecuteActionService<T>(params);
+};
