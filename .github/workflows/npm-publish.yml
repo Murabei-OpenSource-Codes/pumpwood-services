@@ -28,7 +28,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org/'
+          # We REMOVE registry-url here to prevent the conflicting .npmrc creation
+      
       - run: npm ci
-      # npm will now automatically use the OIDC token provided by GitHub
-      - run: npm publish --provenance --access public
+
+      # We manually set the config to use the OIDC token
+      - name: Publish to npm
+        run: |
+          npm config set //registry.npmjs.org/:aud=https://registry.npmjs.org/
+          npm config set //registry.npmjs.org/:_authToken="" 
+          npm publish --provenance --access public
