@@ -13,13 +13,13 @@ describe("ExecuteActionService", () => {
     const mockData = { status: "approved", message: "Action executed successfully" };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
-    const [data, error] = await ExecuteActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      123,
-      "review",
-      { new_status: "approved" }
-    );
+    const [data, error] = await ExecuteActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 123,
+      actionName: "review",
+      parameters: { new_status: "approved" }
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
@@ -32,13 +32,13 @@ describe("ExecuteActionService", () => {
   it("should return error on failure", async () => {
     fetchMock.mockResponseOnce("Server error", { status: 500 });
 
-    const [data, error] = await ExecuteActionService(
-      api,
-      "MaterialApprovalActivity",
-      123,
-      "review",
-      { new_status: "approved" }
-    );
+    const [data, error] = await ExecuteActionService({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 123,
+      actionName: "review",
+      parameters: { new_status: "approved" }
+    });
 
     expect(data).toBeNull();
     expect(error).toBeInstanceOf(Error);
@@ -46,13 +46,13 @@ describe("ExecuteActionService", () => {
   });
 
   it("should return error when modelClass is missing", async () => {
-    const [data, error] = await ExecuteActionService(
-      api,
-      "",
-      123,
-      "review",
-      { new_status: "approved" }
-    );
+    const [data, error] = await ExecuteActionService({
+      api: api,
+      modelClass: "",
+      pk: 123,
+      actionName: "review",
+      parameters: { new_status: "approved" }
+    });
 
     expect(data).toBeNull();
     expect(error).toBeInstanceOf(Error);
@@ -60,13 +60,13 @@ describe("ExecuteActionService", () => {
   });
 
   it("should return error when actionName is missing", async () => {
-    const [data, error] = await ExecuteActionService(
-      api,
-      "MaterialApprovalActivity",
-      123,
-      "",
-      { new_status: "approved" }
-    );
+    const [data, error] = await ExecuteActionService({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 123,
+      actionName: "",
+      parameters: { new_status: "approved" }
+    });
 
     expect(data).toBeNull();
     expect(error).toBeInstanceOf(Error);
@@ -82,14 +82,14 @@ describe("ExecuteActionService", () => {
       format: "json"
     };
 
-    const [data, error] = await ExecuteActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      123,
-      "review",
-      { new_status: "approved" },
-      queryParams
-    );
+    const [data, error] = await ExecuteActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 123,
+      actionName: "review",
+      parameters: { new_status: "approved" },
+      queryParams: queryParams
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
@@ -104,13 +104,13 @@ describe("ExecuteActionService", () => {
     const parameters = { new_status: "approved", comment: "Looks good" };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
-    await ExecuteActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      123,
-      "review",
-      parameters
-    );
+    await ExecuteActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 123,
+      actionName: "review",
+      parameters: parameters
+    });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://example.com/MaterialApprovalActivity/actions/review/123/",
@@ -125,12 +125,12 @@ describe("ExecuteActionService", () => {
     const mockData = { status: "success" };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
-    const [data, error] = await ExecuteActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      123,
-      "review"
-    );
+    const [data, error] = await ExecuteActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 123,
+      actionName: "review"
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
@@ -147,13 +147,13 @@ describe("ExecuteActionService", () => {
     const mockData = { total: 100, approved: 80 };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
-    const [data, error] = await ExecuteActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      0,
-      "get_statistics",
-      { year: 2024 }
-    );
+    const [data, error] = await ExecuteActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      pk: 0,
+      actionName: "get_statistics",
+      parameters: { year: 2024 }
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
@@ -176,12 +176,12 @@ describe("ExecuteStaticActionService", () => {
     const mockData = { total: 100, approved: 80, rejected: 20 };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
-    const [data, error] = await ExecuteStaticActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      "get_statistics",
-      { year: 2024 }
-    );
+    const [data, error] = await ExecuteStaticActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      actionName: "get_statistics",
+      parameters: { year: 2024 }
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
@@ -194,12 +194,12 @@ describe("ExecuteStaticActionService", () => {
   it("should return error on failure", async () => {
     fetchMock.mockResponseOnce("Server error", { status: 500 });
 
-    const [data, error] = await ExecuteStaticActionService(
-      api,
-      "MaterialApprovalActivity",
-      "get_statistics",
-      { year: 2024 }
-    );
+    const [data, error] = await ExecuteStaticActionService({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      actionName: "get_statistics",
+      parameters: { year: 2024 }
+    });
 
     expect(data).toBeNull();
     expect(error).toBeInstanceOf(Error);
@@ -215,13 +215,13 @@ describe("ExecuteStaticActionService", () => {
       include_metadata: "true"
     };
 
-    const [data, error] = await ExecuteStaticActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      "get_statistics",
-      { year: 2024 },
-      queryParams
-    );
+    const [data, error] = await ExecuteStaticActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      actionName: "get_statistics",
+      parameters: { year: 2024 },
+      queryParams: queryParams
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);
@@ -235,11 +235,11 @@ describe("ExecuteStaticActionService", () => {
     const mockData = { status: "ok" };
     fetchMock.mockResponseOnce(JSON.stringify(mockData));
 
-    const [data, error] = await ExecuteStaticActionService<typeof mockData>(
-      api,
-      "MaterialApprovalActivity",
-      "health_check"
-    );
+    const [data, error] = await ExecuteStaticActionService<typeof mockData>({
+      api: api,
+      modelClass: "MaterialApprovalActivity",
+      actionName: "health_check"
+    });
 
     expect(error).toBeNull();
     expect(data).toEqual(mockData);

@@ -422,16 +422,16 @@ interface ReviewResponse {
 }
 
 async function reviewMaterial(activityId: number, newStatus: string) {
-  const [result, error] = await ExecuteActionService<ReviewResponse>(
-    api,
-    "MaterialApprovalActivity",
-    activityId,
-    "review",
-    {
+  const [result, error] = await ExecuteActionService<ReviewResponse>({
+    api: api,
+    modelClass: "MaterialApprovalActivity",
+    pk: activityId,
+    actionName: "review",
+    parameters: {
       new_status: newStatus,
       comment: "Approved after review",
-    }
-  );
+    },
+  });
 
   if (error) {
     console.error("Failed to execute action:", error.message);
@@ -485,12 +485,12 @@ interface Statistics {
 }
 
 async function getYearlyStatistics(year: number) {
-  const [stats, error] = await ExecuteStaticActionService<Statistics>(
-    api,
-    "MaterialApprovalActivity",
-    "get_statistics",
-    { year }
-  );
+  const [stats, error] = await ExecuteStaticActionService<Statistics>({
+    api: api,
+    modelClass: "MaterialApprovalActivity",
+    actionName: "get_statistics",
+    parameters: { year },
+  });
 
   if (error) {
     console.error("Failed to get statistics:", error.message);
