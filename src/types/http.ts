@@ -9,3 +9,10 @@ export interface ApiServiceConfig {
   baseUrl: string;
   token: string;
 }
+
+export type TokenProvider = string | (() => string | Promise<string>);
+
+export interface IPumpwoodClientConfig {
+  baseUrl: string;
+  token: TokenProvider;
+}

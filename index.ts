@@ -1,7 +1,8 @@
 export type { IErrorDict } from "./src/types/error.js";
-export type { HttpMethod, IFileData, ApiServiceConfig } from "./src/types/http.js";
+export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig } from "./src/types/http.js";
 export { safeAwait } from "./src/core/safe-await.js";
 export { ApiService } from "./src/core/api-service.js";
+export { PumpwoodClient } from "./src/core/pumpwood-client.js";
 export { ListService } from "./src/services/list.js";
 export { RetrieveService } from "./src/services/retrieve.js";
 export { RetrieveFileService } from "./src/services/retrieve-file.js";
