@@ -1,14 +1,20 @@
-import type { IFileData, IPumpwoodClientConfig, TokenProvider } from "../types/http.js";
+import type { IFileData, IPumpwoodClientConfig, IRetrieveOptions, ISaveOptions, TokenProvider } from "../types/http.js";
 import type { IErrorDict } from "../types/error.js";
 import { ApiService } from "./api-service.js";
 import { ListService } from "../services/list.js";
+import { ListWithoutPagService } from "../services/list-without-pag.js";
 import { RetrieveService } from "../services/retrieve.js";
+import { RetrieveOptionsService } from "../services/retrieve-options.js";
 import { RetrieveFileService } from "../services/retrieve-file.js";
 import { SaveService } from "../services/save.js";
 import { DeleteService } from "../services/delete.js";
 import { UploadFileService } from "../services/upload.js";
 import { ExecuteActionService } from "../services/execute-action.js";
 import { ExecuteStaticActionService } from "../services/execute-static-action.js";
+import { ExecuteActionFileService } from "../services/execute-action-file.js";
+import { ExecuteStaticActionFileService } from "../services/execute-static-action-file.js";
+
+type BuildApi = () => Promise<ApiService>;
 
 async function resolveToken(token: TokenProvider): Promise<string> {
   if (typeof token === "function") {
@@ -17,116 +23,85 @@ async function resolveToken(token: TokenProvider): Promise<string> {
   return token;
 }
 
+function optionsToQueryParams(
+  options: Record<string, boolean | string | number | undefined>
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(options)) {
+    if (value === undefined || value === null) continue;
+    result[key] = String(value);
+  }
+  return result;
+}
+
 export class PumpwoodClient {
-  private readonly baseUrl: string;
-  private readonly token: TokenProvider;
+  readonly list: <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
+  readonly listWithoutPag: <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
+  readonly retrieve: <T>(modelClass: string, pk: number, options?: IRetrieveOptions) => Promise<[T | null, IErrorDict | null]>;
+  readonly retrieveFile: (modelClass: string, pk: number, fileField?: string) => Promise<[IFileData | null, IErrorDict | null]>;
+  readonly retrieveOptions: <T>(modelClass: string, body?: Record<string, any>) => Promise<[T | null, IErrorDict | null]>;
+  readonly save: <T>(modelClass: string, body: Record<any, any>, options?: ISaveOptions) => Promise<[T | null, IErrorDict | null]>;
+  readonly delete: <T = void>(modelClass: string, pk: number) => Promise<[T | null, IErrorDict | null]>;
+  readonly uploadFile: <T>(modelClass: string, file: File, jsonData: Record<string, any>, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
+  readonly executeAction: <T = any>(params: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[T | null, IErrorDict | null]>;
+  readonly executeStaticAction: <T = any>(params: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[T | null, IErrorDict | null]>;
+  readonly executeActionFile: (params: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[IFileData | null, IErrorDict | null]>;
+  readonly executeStaticActionFile: (params: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[IFileData | null, IErrorDict | null]>;
 
   constructor({ baseUrl, token }: IPumpwoodClientConfig) {
-    this.baseUrl = baseUrl;
-    this.token = token;
-  }
+    const buildApi: BuildApi = async () => {
+      const resolvedToken = await resolveToken(token);
+      return new ApiService({ baseUrl, token: resolvedToken });
+    };
 
-  private async buildApi(): Promise<ApiService> {
-    const resolvedToken = await resolveToken(this.token);
-    return new ApiService({ baseUrl: this.baseUrl, token: resolvedToken });
-  }
+    this.list = async <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => {
+      return ListService<T>(await buildApi(), modelClass, body, queryParams);
+    };
 
-  async list<T>(
-    modelClass: string,
-    body?: any,
-    queryParams?: Record<string, string>
-  ): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return ListService<T>(api, modelClass, body, queryParams);
-  }
+    this.listWithoutPag = async <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => {
+      return ListWithoutPagService<T>(await buildApi(), modelClass, body, queryParams);
+    };
 
-  async retrieve<T>(
-    modelClass: string,
-    pk: number,
-    queryParams?: Record<string, string>
-  ): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return RetrieveService<T>(api, modelClass, pk, queryParams);
-  }
+    this.retrieve = async <T>(modelClass: string, pk: number, options?: IRetrieveOptions) => {
+      const queryParams = options ? optionsToQueryParams(options) : undefined;
+      return RetrieveService<T>(await buildApi(), modelClass, pk, queryParams);
+    };
 
-  async retrieveFile(
-    modelClass: string,
-    pk: number,
-    fileField?: string
-  ): Promise<[IFileData | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return RetrieveFileService(api, modelClass, pk, fileField);
-  }
+    this.retrieveFile = async (modelClass: string, pk: number, fileField?: string) => {
+      return RetrieveFileService(await buildApi(), modelClass, pk, fileField);
+    };
 
-  async save<T>(
-    modelClass: string,
-    body: Record<any, any>,
-    queryParams?: Record<string, string>
-  ): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return SaveService<T>(api, modelClass, body, queryParams);
-  }
+    this.retrieveOptions = async <T>(modelClass: string, body?: Record<string, any>) => {
+      return RetrieveOptionsService<T>(await buildApi(), modelClass, body);
+    };
 
-  async delete<T = void>(
-    modelClass: string,
-    pk: number
-  ): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return DeleteService<T>(api, modelClass, pk);
-  }
+    this.save = async <T>(modelClass: string, body: Record<any, any>, options?: ISaveOptions) => {
+      const queryParams = options ? optionsToQueryParams(options) : undefined;
+      return SaveService<T>(await buildApi(), modelClass, body, queryParams);
+    };
 
-  async uploadFile<T>(
-    modelClass: string,
-    file: File,
-    jsonData: Record<string, any>,
-    queryParams?: Record<string, string>
-  ): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return UploadFileService<T>(api, modelClass, file, jsonData, queryParams);
-  }
+    this.delete = async <T = void>(modelClass: string, pk: number) => {
+      return DeleteService<T>(await buildApi(), modelClass, pk);
+    };
 
-  async executeAction<T = any>({
-    modelClass,
-    pk,
-    actionName,
-    parameters,
-    queryParams,
-  }: {
-    modelClass: string;
-    pk: number;
-    actionName: string;
-    parameters?: Record<string, any>;
-    queryParams?: Record<string, string>;
-  }): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return ExecuteActionService<T>({
-      api,
-      modelClass,
-      pk,
-      actionName,
-      ...(parameters !== undefined && { parameters }),
-      ...(queryParams !== undefined && { queryParams }),
-    });
-  }
+    this.uploadFile = async <T>(modelClass: string, file: File, jsonData: Record<string, any>, queryParams?: Record<string, string>) => {
+      return UploadFileService<T>(await buildApi(), modelClass, file, jsonData, queryParams);
+    };
 
-  async executeStaticAction<T = any>({
-    modelClass,
-    actionName,
-    parameters,
-    queryParams,
-  }: {
-    modelClass: string;
-    actionName: string;
-    parameters?: Record<string, any>;
-    queryParams?: Record<string, string>;
-  }): Promise<[T | null, IErrorDict | null]> {
-    const api = await this.buildApi();
-    return ExecuteStaticActionService<T>({
-      api,
-      modelClass,
-      actionName,
-      ...(parameters !== undefined && { parameters }),
-      ...(queryParams !== undefined && { queryParams }),
-    });
+    this.executeAction = async <T = any>({ modelClass, pk, actionName, parameters, queryParams }: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
+      return ExecuteActionService<T>({ api: await buildApi(), modelClass, pk, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+    };
+
+    this.executeStaticAction = async <T = any>({ modelClass, actionName, parameters, queryParams }: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
+      return ExecuteStaticActionService<T>({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+    };
+
+    this.executeActionFile = async ({ modelClass, pk, actionName, parameters, queryParams }: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
+      return ExecuteActionFileService({ api: await buildApi(), modelClass, pk, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+    };
+
+    this.executeStaticActionFile = async ({ modelClass, actionName, parameters, queryParams }: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
+      return ExecuteStaticActionFileService({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+    };
   }
 }
