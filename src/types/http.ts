@@ -16,3 +16,15 @@ export interface IPumpwoodClientConfig {
   baseUrl: string;
   token: TokenProvider;
 }
+
+export interface IRetrieveOptions {
+  foreign_key_fields?: boolean;
+  related_fields?: boolean;
+  [key: string]: boolean | string | number | undefined;
+}
+
+export interface ISaveOptions {
+  foreign_key_fields?: boolean;
+  related_fields?: boolean;
+  [key: string]: boolean | string | number | undefined;
+}
