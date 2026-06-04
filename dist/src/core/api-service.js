@@ -139,6 +139,45 @@ class ApiService {
             contentType: blob.type,
         };
     }
+    /**
+     * Performs a POST request with a JSON body and returns the binary response as a file.
+     * Used for actions that generate file downloads (e.g., Excel, PDF exports).
+     * ⚠️ NOT SERIALIZABLE for SSR - blob must be used on the same side (client or server).
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {any} [body] - Optional JSON body for the POST request.
+     * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
+     * @returns {Promise<IFileData>} A promise that resolves with the file data (blob).
+     * @throws {Error} Throws an error if the baseUrl is not set or if the API request fails.
+     */
+    async postFileRequest(endpoint, body, queryParams) {
+        if (!this.baseUrl) {
+            throw new Error("ApiService: baseUrl is missing. Ensure it is provided when creating the ApiService instance.");
+        }
+        let url = `${this.baseUrl.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
+        if (queryParams && Object.keys(queryParams).length > 0) {
+            const queryString = new URLSearchParams(queryParams).toString();
+            url = `${url}?${queryString}`;
+        }
+        const headers = {
+            Authorization: `Token ${this.token}`,
+            "Content-Type": "application/json",
+        };
+        const options = {
+            method: "POST",
+            headers,
+            ...(body !== undefined && { body: JSON.stringify(body) }),
+        };
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw parseApiError(response.status, response.statusText, errorText);
+        }
+        const blob = await response.blob();
+        return {
+            blob,
+            contentType: blob.type,
+        };
+    }
 }
 exports.ApiService = ApiService;
 //# sourceMappingURL=api-service.js.map

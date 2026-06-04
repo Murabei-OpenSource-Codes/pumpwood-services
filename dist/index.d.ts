@@ -1,13 +1,18 @@
 export type { IErrorDict } from "./src/types/error.js";
-export type { HttpMethod, IFileData, ApiServiceConfig } from "./src/types/http.js";
+export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig, IRetrieveOptions, ISaveOptions } from "./src/types/http.js";
 export { safeAwait } from "./src/core/safe-await.js";
 export { ApiService } from "./src/core/api-service.js";
+export { PumpwoodClient } from "./src/core/pumpwood-client.js";
 export { ListService } from "./src/services/list.js";
+export { ListWithoutPagService } from "./src/services/list-without-pag.js";
 export { RetrieveService } from "./src/services/retrieve.js";
+export { RetrieveOptionsService } from "./src/services/retrieve-options.js";
 export { RetrieveFileService } from "./src/services/retrieve-file.js";
 export { SaveService } from "./src/services/save.js";
 export { DeleteService } from "./src/services/delete.js";
 export { UploadFileService } from "./src/services/upload.js";
 export { ExecuteActionService } from "./src/services/execute-action.js";
 export { ExecuteStaticActionService } from "./src/services/execute-static-action.js";
+export { ExecuteActionFileService } from "./src/services/execute-action-file.js";
+export { ExecuteStaticActionFileService } from "./src/services/execute-static-action-file.js";
 //# sourceMappingURL=index.d.ts.map
