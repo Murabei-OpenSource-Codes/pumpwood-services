@@ -28,3 +28,21 @@ export interface ISaveOptions {
   related_fields?: boolean;
   [key: string]: boolean | string | number | undefined;
 }
+
+export interface ILoginResult {
+  token: string;
+}
+
+export interface ILoginSSOResult {
+  redirect_url: string;
+}
+
+export interface IGetSSOTokenUser {
+  email: string;
+  username: string;
+}
+
+export interface IGetSSOTokenResult {
+  token: string;
+  user: IGetSSOTokenUser;
+}

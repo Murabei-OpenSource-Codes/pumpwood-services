@@ -14,6 +14,9 @@ const execute_action_js_1 = require("../services/execute-action.js");
 const execute_static_action_js_1 = require("../services/execute-static-action.js");
 const execute_action_file_js_1 = require("../services/execute-action-file.js");
 const execute_static_action_file_js_1 = require("../services/execute-static-action-file.js");
+const login_js_1 = require("../services/login.js");
+const login_sso_js_1 = require("../services/login-sso.js");
+const get_sso_token_js_1 = require("../services/get-sso-token.js");
 async function resolveToken(token) {
     if (typeof token === "function") {
         return await token();
@@ -42,6 +45,9 @@ class PumpwoodClient {
     executeStaticAction;
     executeActionFile;
     executeStaticActionFile;
+    loginWithCredentials;
+    loginWithSSO;
+    getSSOToken;
     constructor({ baseUrl, token }) {
         const buildApi = async () => {
             const resolvedToken = await resolveToken(token);
@@ -84,6 +90,15 @@ class PumpwoodClient {
         };
         this.executeStaticActionFile = async ({ modelClass, actionName, parameters, queryParams }) => {
             return (0, execute_static_action_file_js_1.ExecuteStaticActionFileService)({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+        };
+        this.loginWithCredentials = async (credentials) => {
+            return (0, login_js_1.LoginService)(baseUrl, credentials);
+        };
+        this.loginWithSSO = async (email) => {
+            return (0, login_sso_js_1.LoginSSOService)(baseUrl, email);
+        };
+        this.getSSOToken = async (url) => {
+            return (0, get_sso_token_js_1.GetSSOTokenService)(url);
         };
     }
 }

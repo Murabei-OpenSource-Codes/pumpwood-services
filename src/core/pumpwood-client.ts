@@ -1,4 +1,4 @@
-import type { IFileData, IPumpwoodClientConfig, IRetrieveOptions, ISaveOptions, TokenProvider } from "../types/http.js";
+import type { IFileData, IPumpwoodClientConfig, ILoginResult, ILoginSSOResult, IGetSSOTokenResult, IRetrieveOptions, ISaveOptions, TokenProvider } from "../types/http.js";
 import type { IErrorDict } from "../types/error.js";
 import { ApiService } from "./api-service.js";
 import { ListService } from "../services/list.js";
@@ -13,6 +13,9 @@ import { ExecuteActionService } from "../services/execute-action.js";
 import { ExecuteStaticActionService } from "../services/execute-static-action.js";
 import { ExecuteActionFileService } from "../services/execute-action-file.js";
 import { ExecuteStaticActionFileService } from "../services/execute-static-action-file.js";
+import { LoginService } from "../services/login.js";
+import { LoginSSOService } from "../services/login-sso.js";
+import { GetSSOTokenService } from "../services/get-sso-token.js";
 
 type BuildApi = () => Promise<ApiService>;
 
@@ -47,6 +50,9 @@ export class PumpwoodClient {
   readonly executeStaticAction: <T = any>(params: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[T | null, IErrorDict | null]>;
   readonly executeActionFile: (params: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[IFileData | null, IErrorDict | null]>;
   readonly executeStaticActionFile: (params: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[IFileData | null, IErrorDict | null]>;
+  readonly loginWithCredentials: (credentials: { username: string; password: string }) => Promise<[ILoginResult | null, IErrorDict | null]>;
+  readonly loginWithSSO: (email: string) => Promise<[ILoginSSOResult | null, IErrorDict | null]>;
+  readonly getSSOToken: (url: string) => Promise<[IGetSSOTokenResult | null, IErrorDict | null]>;
 
   constructor({ baseUrl, token }: IPumpwoodClientConfig) {
     const buildApi: BuildApi = async () => {
@@ -102,6 +108,18 @@ export class PumpwoodClient {
 
     this.executeStaticActionFile = async ({ modelClass, actionName, parameters, queryParams }: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
       return ExecuteStaticActionFileService({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+    };
+
+    this.loginWithCredentials = async (credentials: { username: string; password: string }) => {
+      return LoginService(baseUrl, credentials);
+    };
+
+    this.loginWithSSO = async (email: string) => {
+      return LoginSSOService(baseUrl, email);
+    };
+
+    this.getSSOToken = async (url: string) => {
+      return GetSSOTokenService(url);
     };
   }
 }

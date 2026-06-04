@@ -319,6 +319,65 @@ try {
 
 ---
 
+### `loginWithCredentials`
+
+```typescript
+pumpwood.loginWithCredentials({ username, password });
+```
+
+`POST /registration/login/` — autentica com username e password, retorna o token.
+
+```typescript
+const [result, error] = await pumpwood.loginWithCredentials({
+  username: "john",
+  password: "secret",
+});
+if (error) throw new Error(error.message);
+
+// Consumidor decide onde guardar o token (cookie, localStorage, etc.)
+setCookie("PumpwoodAuthorization", result.token);
+```
+
+---
+
+### `loginWithSSO`
+
+```typescript
+pumpwood.loginWithSSO(email);
+```
+
+`POST /registration/oauth2-login/` — inicia o fluxo SSO OAuth2, retorna a URL de redirecionamento.
+
+```typescript
+const [result, error] = await pumpwood.loginWithSSO("user@example.com");
+if (error) throw new Error(error.message);
+
+// Redireciona para o provider OAuth2
+window.location.href = result.redirect_url;
+```
+
+---
+
+### `getSSOToken`
+
+```typescript
+pumpwood.getSSOToken(url);
+```
+
+Troca a URL de callback SSO (após redirect do provider) pelo token e dados do usuário.
+
+```typescript
+// Chamado após o provider redirecionar de volta
+const callbackUrl = `${baseUrl}/sso/callback/?code=xyz&state=abc`;
+const [result, error] = await pumpwood.getSSOToken(callbackUrl);
+if (error) throw new Error(error.message);
+
+setCookie("PumpwoodAuthorization", result.token);
+setCookie("user", JSON.stringify(result.user)); // { email, username }
+```
+
+---
+
 ## Serviços de baixo nível
 
 Para quem precisa de controle direto, todos os serviços também são exportados individualmente e recebem um `ApiService` explícito:
@@ -333,7 +392,7 @@ const [items, error] = await ListService<Item[]>(api, "mymodel", {
 });
 ```
 
-Serviços disponíveis: `ListService`, `ListWithoutPagService`, `RetrieveService`, `RetrieveOptionsService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, `ExecuteStaticActionService`, `ExecuteActionFileService`.
+Serviços disponíveis: `ListService`, `ListWithoutPagService`, `RetrieveService`, `RetrieveOptionsService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, `ExecuteStaticActionService`, `ExecuteActionFileService`, `LoginService`, `LoginSSOService`, `GetSSOTokenService`.
 
 ---
 
@@ -349,6 +408,10 @@ Serviços disponíveis: `ListService`, `ListWithoutPagService`, `RetrieveService
 | `TokenProvider`         | `string` ou `() => string \| Promise<string>`                                    |
 | `ApiServiceConfig`      | Config do `ApiService` de baixo nível: `{ baseUrl, token }` (token já resolvido) |
 | `HttpMethod`            | `"GET" \| "POST" \| "PUT" \| "DELETE"`                                           |
+| `ILoginResult`          | Resultado de `loginWithCredentials`: `{ token: string }`                         |
+| `ILoginSSOResult`       | Resultado de `loginWithSSO`: `{ redirect_url: string }`                          |
+| `IGetSSOTokenUser`      | Dados do usuário SSO: `{ email: string, username: string }`                      |
+| `IGetSSOTokenResult`    | Resultado de `getSSOToken`: `{ token: string, user: IGetSSOTokenUser }`          |
 
 ---
 

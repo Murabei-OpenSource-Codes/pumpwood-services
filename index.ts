@@ -1,5 +1,5 @@
 export type { IErrorDict } from "./src/types/error.js";
-export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig, IRetrieveOptions, ISaveOptions } from "./src/types/http.js";
+export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig, IRetrieveOptions, ISaveOptions, ILoginResult, ILoginSSOResult, IGetSSOTokenUser, IGetSSOTokenResult } from "./src/types/http.js";
 export { safeAwait } from "./src/core/safe-await.js";
 export { ApiService } from "./src/core/api-service.js";
 export { PumpwoodClient } from "./src/core/pumpwood-client.js";
@@ -15,3 +15,6 @@ export { ExecuteActionService } from "./src/services/execute-action.js";
 export { ExecuteStaticActionService } from "./src/services/execute-static-action.js";
 export { ExecuteActionFileService } from "./src/services/execute-action-file.js";
 export { ExecuteStaticActionFileService } from "./src/services/execute-static-action-file.js";
+export { LoginService } from "./src/services/login.js";
+export { LoginSSOService } from "./src/services/login-sso.js";
+export { GetSSOTokenService } from "./src/services/get-sso-token.js";

@@ -1,4 +1,4 @@
-import type { IFileData, IPumpwoodClientConfig, IRetrieveOptions, ISaveOptions } from "../types/http.js";
+import type { IFileData, IPumpwoodClientConfig, ILoginResult, ILoginSSOResult, IGetSSOTokenResult, IRetrieveOptions, ISaveOptions } from "../types/http.js";
 import type { IErrorDict } from "../types/error.js";
 export declare class PumpwoodClient {
     readonly list: <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
@@ -35,6 +35,12 @@ export declare class PumpwoodClient {
         parameters?: Record<string, any>;
         queryParams?: Record<string, string>;
     }) => Promise<[IFileData | null, IErrorDict | null]>;
+    readonly loginWithCredentials: (credentials: {
+        username: string;
+        password: string;
+    }) => Promise<[ILoginResult | null, IErrorDict | null]>;
+    readonly loginWithSSO: (email: string) => Promise<[ILoginSSOResult | null, IErrorDict | null]>;
+    readonly getSSOToken: (url: string) => Promise<[IGetSSOTokenResult | null, IErrorDict | null]>;
     constructor({ baseUrl, token }: IPumpwoodClientConfig);
 }
 //# sourceMappingURL=pumpwood-client.d.ts.map
