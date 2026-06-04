@@ -102,8 +102,8 @@ export class PumpwoodClient {
       return ExecuteStaticActionService<T>({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
     };
 
-    this.executeActionFile = async ({ modelClass, pk, actionName, parameters, queryParams }: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
-      return ExecuteActionFileService({ api: await buildApi(), modelClass, pk, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+    this.executeActionFile = async ({ modelClass, actionName, parameters, queryParams }: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {
+      return ExecuteActionFileService({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
     };
 
     this.executeStaticActionFile = async ({ modelClass, actionName, parameters, queryParams }: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => {

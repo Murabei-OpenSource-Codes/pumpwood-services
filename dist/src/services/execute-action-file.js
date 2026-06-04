@@ -11,7 +11,6 @@ const safe_await_js_1 = require("../core/safe-await.js");
  *
  * @param {ApiService} params.api - An instance of the ApiService.
  * @param {string} params.modelClass - The name of the model class.
- * @param {number} params.pk - The primary key of the instance (use 0 for static actions).
  * @param {string} params.actionName - The name of the action to execute.
  * @param {Record<string, any>} [params.parameters] - Optional parameters to pass to the action.
  * @param {Record<string, string>} [params.queryParams] - Optional query parameters.
@@ -21,7 +20,6 @@ const safe_await_js_1 = require("../core/safe-await.js");
  * const [fileData, error] = await ExecuteActionFileService({
  *   api,
  *   modelClass: "Report",
- *   pk: 123,
  *   actionName: "export_excel",
  * });
  * if (error) throw new Error(error.message);
@@ -36,12 +34,12 @@ const safe_await_js_1 = require("../core/safe-await.js");
  *   URL.revokeObjectURL(url); // always revoke to prevent memory leaks
  * }
  */
-const ExecuteActionFileService = async ({ api, modelClass, pk, actionName, parameters, queryParams, }) => {
+const ExecuteActionFileService = async ({ api, modelClass, actionName, parameters, queryParams, }) => {
     const normalizedModelClass = modelClass.toLowerCase();
     const requestBody = parameters ?? {};
     const [response, error] = await (0, safe_await_js_1.safeAwait)(queryParams
-        ? api.postFileRequest(`/${normalizedModelClass}/actions/${actionName}/${String(pk)}/`, requestBody, queryParams)
-        : api.postFileRequest(`/${normalizedModelClass}/actions/${actionName}/${String(pk)}/`, requestBody));
+        ? api.postFileRequest(`/${normalizedModelClass}/actions/${actionName}/`, requestBody, queryParams)
+        : api.postFileRequest(`/${normalizedModelClass}/actions/${actionName}/`, requestBody));
     if (error) {
         console.error("==> ExecuteActionFileService ERROR:", error);
         return [null, error];

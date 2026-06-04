@@ -10,7 +10,6 @@ import type { ApiService } from "../core/api-service.js";
  *
  * @param {ApiService} params.api - An instance of the ApiService.
  * @param {string} params.modelClass - The name of the model class.
- * @param {number} params.pk - The primary key of the instance (use 0 for static actions).
  * @param {string} params.actionName - The name of the action to execute.
  * @param {Record<string, any>} [params.parameters] - Optional parameters to pass to the action.
  * @param {Record<string, string>} [params.queryParams] - Optional query parameters.
@@ -20,7 +19,6 @@ import type { ApiService } from "../core/api-service.js";
  * const [fileData, error] = await ExecuteActionFileService({
  *   api,
  *   modelClass: "Report",
- *   pk: 123,
  *   actionName: "export_excel",
  * });
  * if (error) throw new Error(error.message);
@@ -35,10 +33,9 @@ import type { ApiService } from "../core/api-service.js";
  *   URL.revokeObjectURL(url); // always revoke to prevent memory leaks
  * }
  */
-export declare const ExecuteActionFileService: ({ api, modelClass, pk, actionName, parameters, queryParams, }: {
+export declare const ExecuteActionFileService: ({ api, modelClass, actionName, parameters, queryParams, }: {
     api: ApiService;
     modelClass: string;
-    pk: number;
     actionName: string;
     parameters?: Record<string, any>;
     queryParams?: Record<string, string>;

@@ -5,7 +5,6 @@ import type { ApiService } from "../core/api-service.js";
  * Executes a static action on a model class (no instance required) and returns the result as a binary file (Blob).
  *
  * Static actions are class-level methods that don't require a specific instance.
- * This is a convenience wrapper around ExecuteActionFileService with pk=0.
  *
  * ⚠️ Blob URL lifecycle: always call URL.revokeObjectURL() after the download is triggered
  * to avoid memory leaks.

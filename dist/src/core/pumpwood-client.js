@@ -85,8 +85,8 @@ class PumpwoodClient {
         this.executeStaticAction = async ({ modelClass, actionName, parameters, queryParams }) => {
             return (0, execute_static_action_js_1.ExecuteStaticActionService)({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
         };
-        this.executeActionFile = async ({ modelClass, pk, actionName, parameters, queryParams }) => {
-            return (0, execute_action_file_js_1.ExecuteActionFileService)({ api: await buildApi(), modelClass, pk, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
+        this.executeActionFile = async ({ modelClass, actionName, parameters, queryParams }) => {
+            return (0, execute_action_file_js_1.ExecuteActionFileService)({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
         };
         this.executeStaticActionFile = async ({ modelClass, actionName, parameters, queryParams }) => {
             return (0, execute_static_action_file_js_1.ExecuteStaticActionFileService)({ api: await buildApi(), modelClass, actionName, ...(parameters !== undefined && { parameters }), ...(queryParams !== undefined && { queryParams }) });
