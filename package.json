@@ -1,6 +1,9 @@
 {
-  "name": "pumpwood-services",
-  "version": "0.13.0-alpha",
+  "name": "@murabei-data-science/pumpwood-services",
+  "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "A package with all services that connect to Pumpwood",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,8 +11,8 @@
     "build": "tsc",
     "test": "jest --verbose"
   },
-  "author": "Antonio Carlos Filho, @acfilho_dev",
-  "license": "ISC",
+  "author": "Murabei",
+  "license": "MIT",
   "devDependencies": {
     "@jest/globals": "^30.0.5",
     "@types/jest": "^30.0.0",

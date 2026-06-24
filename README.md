@@ -5,7 +5,7 @@ Biblioteca TypeScript para conectar e interagir com uma API Pumpwood. Fornece um
 ## Instalação
 
 ```bash
-npm install pumpwood-services
+npm install @murabei-data-science/pumpwood-services
 ```
 
 ## Início rápido
@@ -16,7 +16,7 @@ Crie o cliente **uma vez** como singleton e importe onde precisar:
 
 ```typescript
 // src/lib/pumpwood.ts
-import { PumpwoodClient } from "pumpwood-services";
+import { PumpwoodClient } from "@murabei-data-science/pumpwood-services";
 
 export const pumpwood = new PumpwoodClient({
   baseUrl: "https://api.seuapp.com/rest",
@@ -29,7 +29,7 @@ export const pumpwood = new PumpwoodClient({
 
 ```typescript
 // src/lib/pumpwood.server.ts
-import { PumpwoodClient } from "pumpwood-services";
+import { PumpwoodClient } from "@murabei-data-science/pumpwood-services";
 import { cookies } from "next/headers";
 
 async function getToken(): Promise<string> {
@@ -383,7 +383,7 @@ setCookie("user", JSON.stringify(result.user)); // { email, username }
 Para quem precisa de controle direto, todos os serviços também são exportados individualmente e recebem um `ApiService` explícito:
 
 ```typescript
-import { ApiService, ListService, RetrieveService } from "pumpwood-services";
+import { ApiService, ListService, RetrieveService } from "@murabei-data-science/pumpwood-services";
 
 const api = new ApiService({ baseUrl: "...", token: "..." });
 
@@ -404,7 +404,7 @@ Quando o token expira ou é inválido, a API retorna **401**. Configure `onUnaut
 
 ```typescript
 // src/lib/pumpwood.server.ts
-import { PumpwoodClient } from "pumpwood-services";
+import { PumpwoodClient } from "@murabei-data-science/pumpwood-services";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -455,7 +455,7 @@ const api = new ApiService({
 });
 
 // ou, sem callback:
-import { isUnauthorizedError } from "pumpwood-services";
+import { isUnauthorizedError } from "@murabei-data-science/pumpwood-services";
 
 if (isUnauthorizedError(error)) await logout();
 ```
