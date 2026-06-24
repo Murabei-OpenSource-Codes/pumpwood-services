@@ -1,7 +1,7 @@
 import type { IErrorDict } from "../types/error.js";
 import type { IGetSSOTokenResult } from "../types/http.js";
 import { safeAwait } from "../core/safe-await.js";
-import { normalizeToErrorDict } from "../types/error.js";
+import { createHttpError, normalizeToErrorDict } from "../types/error.js";
 
 /**
  * Exchanges an SSO callback URL for a Pumpwood token and user info.
@@ -33,7 +33,7 @@ export const GetSSOTokenService = async (
 
   if (!response.ok) {
     const errorText = await response.text();
-    return [null, normalizeToErrorDict(new Error(`HTTP ${response.status}: ${errorText}`))];
+    return [null, normalizeToErrorDict(createHttpError(response.status, `HTTP ${response.status}: ${errorText}`))];
   }
 
   const [jsonData, jsonError] = await safeAwait<{ token?: string; user?: { email?: string; username?: string } }>(response.json());

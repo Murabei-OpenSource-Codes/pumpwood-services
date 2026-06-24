@@ -1,7 +1,7 @@
 import type { IErrorDict } from "../types/error.js";
 import type { ILoginResult } from "../types/http.js";
 import { safeAwait } from "../core/safe-await.js";
-import { normalizeToErrorDict } from "../types/error.js";
+import { createHttpError, normalizeToErrorDict } from "../types/error.js";
 
 /**
  * Authenticates with username and password against the Pumpwood login endpoint.
@@ -48,7 +48,7 @@ export const LoginService = async (
 
   if (!response.ok) {
     const errorText = await response.text();
-    return [null, normalizeToErrorDict(new Error(`HTTP ${response.status}: ${errorText}`))];
+    return [null, normalizeToErrorDict(createHttpError(response.status, `HTTP ${response.status}: ${errorText}`))];
   }
 
   const [jsonData, jsonError] = await safeAwait<{ token: string }>(response.json());

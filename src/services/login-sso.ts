@@ -1,7 +1,7 @@
 import type { IErrorDict } from "../types/error.js";
 import type { ILoginSSOResult } from "../types/http.js";
 import { safeAwait } from "../core/safe-await.js";
-import { normalizeToErrorDict } from "../types/error.js";
+import { createHttpError, normalizeToErrorDict } from "../types/error.js";
 
 /**
  * Initiates an SSO login flow, returning the OAuth2 redirect URL.
@@ -43,7 +43,7 @@ export const LoginSSOService = async (
 
   if (!response.ok) {
     const errorText = await response.text();
-    return [null, normalizeToErrorDict(new Error(`HTTP ${response.status}: ${errorText}`))];
+    return [null, normalizeToErrorDict(createHttpError(response.status, `HTTP ${response.status}: ${errorText}`))];
   }
 
   const [jsonData, jsonError] = await safeAwait<{ mfa_method_result?: { authorization_url?: string } }>(response.json());
