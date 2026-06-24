@@ -48,10 +48,14 @@ class PumpwoodClient {
     loginWithCredentials;
     loginWithSSO;
     getSSOToken;
-    constructor({ baseUrl, token }) {
+    constructor({ baseUrl, token, onUnauthorized }) {
         const buildApi = async () => {
             const resolvedToken = await resolveToken(token);
-            return new api_service_js_1.ApiService({ baseUrl, token: resolvedToken });
+            return new api_service_js_1.ApiService({
+                baseUrl,
+                token: resolvedToken,
+                ...(onUnauthorized !== undefined && { onUnauthorized }),
+            });
         };
         this.list = async (modelClass, body, queryParams) => {
             return (0, list_js_1.ListService)(await buildApi(), modelClass, body, queryParams);

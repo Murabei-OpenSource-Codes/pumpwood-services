@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GetSSOTokenService = exports.LoginSSOService = exports.LoginService = exports.ExecuteStaticActionFileService = exports.ExecuteActionFileService = exports.ExecuteStaticActionService = exports.ExecuteActionService = exports.UploadFileService = exports.DeleteService = exports.SaveService = exports.RetrieveFileService = exports.RetrieveOptionsService = exports.RetrieveService = exports.ListWithoutPagService = exports.ListService = exports.PumpwoodClient = exports.ApiService = exports.safeAwait = void 0;
+exports.GetSSOTokenService = exports.LoginSSOService = exports.LoginService = exports.ExecuteStaticActionFileService = exports.ExecuteActionFileService = exports.ExecuteStaticActionService = exports.ExecuteActionService = exports.UploadFileService = exports.DeleteService = exports.SaveService = exports.RetrieveFileService = exports.RetrieveOptionsService = exports.RetrieveService = exports.ListWithoutPagService = exports.ListService = exports.PumpwoodClient = exports.ApiService = exports.safeAwait = exports.isUnauthorizedError = exports.normalizeToErrorDict = void 0;
+var error_js_1 = require("./src/types/error.js");
+Object.defineProperty(exports, "normalizeToErrorDict", { enumerable: true, get: function () { return error_js_1.normalizeToErrorDict; } });
+Object.defineProperty(exports, "isUnauthorizedError", { enumerable: true, get: function () { return error_js_1.isUnauthorizedError; } });
 var safe_await_js_1 = require("./src/core/safe-await.js");
 Object.defineProperty(exports, "safeAwait", { enumerable: true, get: function () { return safe_await_js_1.safeAwait; } });
 var api_service_js_1 = require("./src/core/api-service.js");

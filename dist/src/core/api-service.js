@@ -8,30 +8,43 @@ exports.ApiService = void 0;
  */
 function parseApiError(status, statusText, errorText) {
     const baseMessage = `API Error: ${status} ${statusText}`;
+    let error;
     try {
         const errorJson = JSON.parse(errorText);
-        const error = new Error(baseMessage);
+        const parsed = new Error(baseMessage);
         Object.keys(errorJson).forEach(key => {
-            error[key === "message" ? "apiMessage" : key] = errorJson[key];
+            parsed[key === "message" ? "apiMessage" : key] = errorJson[key];
         });
-        return error;
+        error = parsed;
     }
     catch {
-        return new Error(`${baseMessage} - ${errorText}`);
+        error = new Error(`${baseMessage} - ${errorText}`);
     }
+    error.status = status;
+    return error;
 }
 class ApiService {
     baseUrl;
     token;
+    onUnauthorized;
     /**
      * Creates an instance of ApiService.
      * @param {ApiServiceConfig} config - The configuration for the API service.
      * @param {string} config.baseUrl - The base URL of the API.
      * @param {string} config.token - The authentication token.
+     * @param {UnauthorizedHandler} [config.onUnauthorized] - Called when the API returns 401.
      */
-    constructor({ baseUrl, token }) {
+    constructor({ baseUrl, token, onUnauthorized }) {
         this.baseUrl = baseUrl;
         this.token = token;
+        this.onUnauthorized = onUnauthorized;
+    }
+    async handleErrorResponse(response) {
+        const errorText = await response.text();
+        if (response.status === 401 && this.onUnauthorized) {
+            await this.onUnauthorized();
+        }
+        throw parseApiError(response.status, response.statusText, errorText);
     }
     /**
      * Performs an API request.
@@ -64,8 +77,7 @@ class ApiService {
             options.body = JSON.stringify(body);
         const response = await fetch(url, options);
         if (!response.ok) {
-            const errorText = await response.text();
-            throw parseApiError(response.status, response.statusText, errorText);
+            return this.handleErrorResponse(response);
         }
         return response.status === 204 ? null : await response.json();
     }
@@ -98,8 +110,7 @@ class ApiService {
         };
         const response = await fetch(url, options);
         if (!response.ok) {
-            const errorText = await response.text();
-            throw parseApiError(response.status, response.statusText, errorText);
+            return this.handleErrorResponse(response);
         }
         return response.status === 204 ? null : await response.json();
     }
@@ -130,8 +141,7 @@ class ApiService {
         };
         const response = await fetch(url, options);
         if (!response.ok) {
-            const errorText = await response.text();
-            throw parseApiError(response.status, response.statusText, errorText);
+            return this.handleErrorResponse(response);
         }
         const blob = await response.blob();
         return {
@@ -169,8 +179,7 @@ class ApiService {
         };
         const response = await fetch(url, options);
         if (!response.ok) {
-            const errorText = await response.text();
-            throw parseApiError(response.status, response.statusText, errorText);
+            return this.handleErrorResponse(response);
         }
         const blob = await response.blob();
         return {

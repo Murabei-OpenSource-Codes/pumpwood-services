@@ -39,7 +39,7 @@ const LoginService = async (baseUrl, { username, password }) => {
     }
     if (!response.ok) {
         const errorText = await response.text();
-        return [null, (0, error_js_1.normalizeToErrorDict)(new Error(`HTTP ${response.status}: ${errorText}`))];
+        return [null, (0, error_js_1.normalizeToErrorDict)((0, error_js_1.createHttpError)(response.status, `HTTP ${response.status}: ${errorText}`))];
     }
     const [jsonData, jsonError] = await (0, safe_await_js_1.safeAwait)(response.json());
     if (jsonError) {

@@ -41,6 +41,6 @@ export declare class PumpwoodClient {
     }) => Promise<[ILoginResult | null, IErrorDict | null]>;
     readonly loginWithSSO: (email: string) => Promise<[ILoginSSOResult | null, IErrorDict | null]>;
     readonly getSSOToken: (url: string) => Promise<[IGetSSOTokenResult | null, IErrorDict | null]>;
-    constructor({ baseUrl, token }: IPumpwoodClientConfig);
+    constructor({ baseUrl, token, onUnauthorized }: IPumpwoodClientConfig);
 }
 //# sourceMappingURL=pumpwood-client.d.ts.map

@@ -2,13 +2,16 @@ import type { HttpMethod, IFileData, ApiServiceConfig } from "../types/http.js";
 export declare class ApiService {
     private baseUrl;
     private token;
+    private onUnauthorized;
     /**
      * Creates an instance of ApiService.
      * @param {ApiServiceConfig} config - The configuration for the API service.
      * @param {string} config.baseUrl - The base URL of the API.
      * @param {string} config.token - The authentication token.
+     * @param {UnauthorizedHandler} [config.onUnauthorized] - Called when the API returns 401.
      */
-    constructor({ baseUrl, token }: ApiServiceConfig);
+    constructor({ baseUrl, token, onUnauthorized }: ApiServiceConfig);
+    private handleErrorResponse;
     /**
      * Performs an API request.
      * @template T - The expected type of the response data.
