@@ -5,9 +5,12 @@ export interface IFileData {
   contentType: string;
 }
 
+export type UnauthorizedHandler = () => void | Promise<void>;
+
 export interface ApiServiceConfig {
   baseUrl: string;
   token: string;
+  onUnauthorized?: UnauthorizedHandler;
 }
 
 export type TokenProvider = string | (() => string | Promise<string>);
@@ -15,6 +18,7 @@ export type TokenProvider = string | (() => string | Promise<string>);
 export interface IPumpwoodClientConfig {
   baseUrl: string;
   token: TokenProvider;
+  onUnauthorized?: UnauthorizedHandler;
 }
 
 export interface IRetrieveOptions {
