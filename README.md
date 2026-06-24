@@ -396,17 +396,88 @@ Serviços disponíveis: `ListService`, `ListWithoutPagService`, `RetrieveService
 
 ---
 
+## Erros de autenticação (401)
+
+Quando o token expira ou é inválido, a API retorna **401**. Configure `onUnauthorized` **uma vez** no `PumpwoodClient` para limpar a sessão e redirecionar ao login:
+
+### Server-side (Next.js Server Actions)
+
+```typescript
+// src/lib/pumpwood.server.ts
+import { PumpwoodClient } from "pumpwood-services";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+async function getToken() {
+  return (await cookies()).get("PumpwoodAuthorization")?.value ?? "";
+}
+
+async function logout() {
+  (await cookies()).delete("PumpwoodAuthorization");
+  (await cookies()).delete("user");
+  redirect("/login?session-expired=true");
+}
+
+export const pumpwood = new PumpwoodClient({
+  baseUrl: process.env.API_URL!,
+  token: getToken,
+  onUnauthorized: logout,
+});
+```
+
+### Client-side (browser)
+
+```typescript
+export const pumpwood = new PumpwoodClient({
+  baseUrl: process.env.NEXT_PUBLIC_API_URL!,
+  token: () => localStorage.getItem("auth_token") ?? "",
+  onUnauthorized: () => {
+    localStorage.removeItem("auth_token");
+    window.location.href = "/login?session-expired=true";
+  },
+});
+```
+
+Uso normal — a lib chama `onUnauthorized` automaticamente antes de retornar o erro:
+
+```typescript
+const [data, error] = await pumpwood.list("mymodel", filter);
+if (error) throw new Error(error.message);
+```
+
+### Uso low-level (`ApiService` direto)
+
+```typescript
+const api = new ApiService({
+  baseUrl: "...",
+  token: "...",
+  onUnauthorized: logout,
+});
+
+// ou, sem callback:
+import { isUnauthorizedError } from "pumpwood-services";
+
+if (isUnauthorizedError(error)) await logout();
+```
+
+O campo `error.status` (401) e o helper `isUnauthorizedError(error)` também estão disponíveis no `IErrorDict` retornado pelos serviços.
+
+> Endpoints de login (`loginWithCredentials`, `loginWithSSO`, `getSSOToken`) **não** disparam `onUnauthorized` — 401 nesses casos significa credenciais inválidas, não sessão expirada.
+
+---
+
 ## Tipos exportados
 
 | Tipo / Interface        | Descrição                                                                        |
 | ----------------------- | -------------------------------------------------------------------------------- |
-| `IErrorDict`            | Formato padronizado de erro Pumpwood: `{ message, type, payload, ... }`          |
+| `IErrorDict`            | Formato padronizado de erro: `{ message, type, payload, status?, ... }`           |
+| `UnauthorizedHandler`   | Callback `() => void \| Promise<void>` para sessão expirada (401)                  |
 | `IFileData`             | Dados de arquivo: `{ blob: Blob, contentType: string }`                          |
 | `IRetrieveOptions`      | Opções para `retrieve` e `save`: `{ foreign_key_fields?, related_fields?, ... }` |
 | `ISaveOptions`          | Alias tipado para opções de `save` (mesma forma que `IRetrieveOptions`)          |
-| `IPumpwoodClientConfig` | Config do `PumpwoodClient`: `{ baseUrl, token }`                                 |
+| `IPumpwoodClientConfig` | Config do `PumpwoodClient`: `{ baseUrl, token, onUnauthorized? }`                |
 | `TokenProvider`         | `string` ou `() => string \| Promise<string>`                                    |
-| `ApiServiceConfig`      | Config do `ApiService` de baixo nível: `{ baseUrl, token }` (token já resolvido) |
+| `ApiServiceConfig`      | Config do `ApiService`: `{ baseUrl, token, onUnauthorized? }`                    |
 | `HttpMethod`            | `"GET" \| "POST" \| "PUT" \| "DELETE"`                                           |
 | `ILoginResult`          | Resultado de `loginWithCredentials`: `{ token: string }`                         |
 | `ILoginSSOResult`       | Resultado de `loginWithSSO`: `{ redirect_url: string }`                          |
