@@ -1,4 +1,4 @@
-import type { HttpMethod, IFileData, ApiServiceConfig } from "../types/http.js";
+import type { HttpMethod, IFileData, ApiServiceConfig, UnauthorizedHandler } from "../types/http.js";
 
 /**
  * Parses API error response body into an Error with PumpWood fields attached.
@@ -7,34 +7,49 @@ import type { HttpMethod, IFileData, ApiServiceConfig } from "../types/http.js";
  */
 function parseApiError(status: number, statusText: string, errorText: string): Error {
   const baseMessage = `API Error: ${status} ${statusText}`;
+  let error: Error;
 
   try {
     const errorJson = JSON.parse(errorText);
-    const error = new Error(baseMessage) as Error & Record<string, any>;
+    const parsed = new Error(baseMessage) as Error & Record<string, any>;
 
     Object.keys(errorJson).forEach(key => {
-      error[key === "message" ? "apiMessage" : key] = errorJson[key];
+      parsed[key === "message" ? "apiMessage" : key] = errorJson[key];
     });
 
-    return error;
+    error = parsed;
   } catch {
-    return new Error(`${baseMessage} - ${errorText}`);
+    error = new Error(`${baseMessage} - ${errorText}`);
   }
+
+  (error as Error & { status: number }).status = status;
+  return error;
 }
 
 export class ApiService {
   private baseUrl: string;
   private token: string;
+  private onUnauthorized: UnauthorizedHandler | undefined;
 
   /**
    * Creates an instance of ApiService.
    * @param {ApiServiceConfig} config - The configuration for the API service.
    * @param {string} config.baseUrl - The base URL of the API.
    * @param {string} config.token - The authentication token.
+   * @param {UnauthorizedHandler} [config.onUnauthorized] - Called when the API returns 401.
    */
-  constructor({ baseUrl, token }: ApiServiceConfig) {
+  constructor({ baseUrl, token, onUnauthorized }: ApiServiceConfig) {
     this.baseUrl = baseUrl;
     this.token = token;
+    this.onUnauthorized = onUnauthorized;
+  }
+
+  private async handleErrorResponse(response: Response): Promise<never> {
+    const errorText = await response.text();
+    if (response.status === 401 && this.onUnauthorized) {
+      await this.onUnauthorized();
+    }
+    throw parseApiError(response.status, response.statusText, errorText);
   }
 
   /**
@@ -83,8 +98,7 @@ export class ApiService {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw parseApiError(response.status, response.statusText, errorText);
+      return this.handleErrorResponse(response);
     }
 
     return response.status === 204 ? null as T : await response.json();
@@ -134,8 +148,7 @@ export class ApiService {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw parseApiError(response.status, response.statusText, errorText);
+      return this.handleErrorResponse(response);
     }
 
     return response.status === 204 ? null as T : await response.json();
@@ -182,8 +195,7 @@ export class ApiService {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw parseApiError(response.status, response.statusText, errorText);
+      return this.handleErrorResponse(response);
     }
 
     const blob = await response.blob();
@@ -239,8 +251,7 @@ export class ApiService {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw parseApiError(response.status, response.statusText, errorText);
+      return this.handleErrorResponse(response);
     }
 
     const blob = await response.blob();

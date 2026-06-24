@@ -54,10 +54,14 @@ export class PumpwoodClient {
   readonly loginWithSSO: (email: string) => Promise<[ILoginSSOResult | null, IErrorDict | null]>;
   readonly getSSOToken: (url: string) => Promise<[IGetSSOTokenResult | null, IErrorDict | null]>;
 
-  constructor({ baseUrl, token }: IPumpwoodClientConfig) {
+  constructor({ baseUrl, token, onUnauthorized }: IPumpwoodClientConfig) {
     const buildApi: BuildApi = async () => {
       const resolvedToken = await resolveToken(token);
-      return new ApiService({ baseUrl, token: resolvedToken });
+      return new ApiService({
+        baseUrl,
+        token: resolvedToken,
+        ...(onUnauthorized !== undefined && { onUnauthorized }),
+      });
     };
 
     this.list = async <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => {
