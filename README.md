@@ -86,17 +86,19 @@ Pumpwood:
 
 | Método | Canal dos parâmetros |
 | ------ | -------------------- |
-| `list`, `listWithoutPag` | POST body (exceto `base_filter_skip`, que vai na query) |
+| `list`, `listWithoutPag`, `aggregate` | POST body (exceto `base_filter_skip`, que vai na query em `list*`) |
 | `retrieve`, `save`, `uploadFile`, `delete`, `retrieveFile` | query params |
 
 ### Defaults
 
 | Campo | Default | Métodos |
 | ----- | ------- | ------- |
-| `filter_dict` | `{}` | `list`, `listWithoutPag` |
-| `exclude_dict` | `{}` | `list`, `listWithoutPag` |
+| `filter_dict` | `{}` | `list`, `listWithoutPag`, `aggregate` |
+| `exclude_dict` | `{}` | `list`, `listWithoutPag`, `aggregate` |
 | `limit` | `50` | `list` |
 | `order_by` | omitido (sem ordenação explícita) | `list`, `listWithoutPag` |
+| `order_by` | `[]` | `aggregate` |
+| `show_deleted` | `false` | `aggregate` |
 | `fields` | omitido (retorna o serializer completo) | todos |
 | `default_fields` | `false` | `list`, `listWithoutPag`, `retrieve`, `save` |
 | `foreign_key_fields` | `true` | `list`, `listWithoutPag`, `retrieve`, `save`, `uploadFile` |
@@ -173,6 +175,43 @@ const [allAreas, error] = await pumpwood.listWithoutPag<GeoArea[]>({
 });
 if (error) throw new Error(error.message);
 ```
+
+---
+
+### `aggregate`
+
+```typescript
+pumpwood.aggregate<T>(params: IAggregateParams)
+```
+
+`POST /{modelClass}/aggregate/` — agregação com `group_by` e funções
+(`sum`, `mean`, `count`, `min`, `max`, `stddev_pop`, `stddev_samp`,
+`var_pop`, `var_samp`, `std`, `var`). As colunas da resposta seguem
+`group_by` + chaves de `agg`.
+
+```typescript
+type CalendarAggregateRow = {
+  calendar_id: number;
+  n: number;
+  mean: number;
+};
+
+const [rows, error] = await pumpwood.aggregate<CalendarAggregateRow[]>({
+  modelClass: "ToLoadCalendar",
+  group_by: ["calendar_id"],
+  agg: {
+    n: { field: "id", function: "count" },
+    mean: { field: "value", function: "mean" },
+  },
+  filter_dict: { is_active: true },
+  order_by: ["calendar_id"],
+  limit: 100,
+});
+if (error) throw new Error(error.message);
+```
+
+`group_by` aceita `string` ou `string[]`. Use `show_deleted: true` para
+incluir registros deletados.
 
 ---
 
@@ -505,7 +544,7 @@ const [items, error] = await ListService<Item[]>(api, "mymodel", {
 });
 ```
 
-Serviços disponíveis: `ListService`, `ListWithoutPagService`, `RetrieveService`, `RetrieveOptionsService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, `ExecuteStaticActionService`, `ExecuteActionFileService`, `LoginService`, `LoginSSOService`, `GetSSOTokenService`.
+Serviços disponíveis: `ListService`, `ListWithoutPagService`, `AggregateService`, `RetrieveService`, `RetrieveOptionsService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, `ExecuteStaticActionService`, `ExecuteActionFileService`, `LoginService`, `LoginSSOService`, `GetSSOTokenService`.
 
 ---
 

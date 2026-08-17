@@ -1,8 +1,9 @@
-import type { IFileData, IPumpwoodClientConfig, ILoginResult, ILoginSSOResult, IGetSSOTokenResult, IListParams, IListWithoutPagParams, IRetrieveParams, ISaveParams, IUploadFileParams, IDeleteParams, IRetrieveFileParams, IRetrieveOptionsParams } from "../types/http.js";
+import type { IFileData, IPumpwoodClientConfig, ILoginResult, ILoginSSOResult, IGetSSOTokenResult, IListParams, IListWithoutPagParams, IRetrieveParams, ISaveParams, IUploadFileParams, IDeleteParams, IRetrieveFileParams, IRetrieveOptionsParams, IAggregateParams } from "../types/http.js";
 import type { IErrorDict } from "../types/error.js";
 export declare class PumpwoodClient {
     readonly list: <T>(params: IListParams) => Promise<[T | null, IErrorDict | null]>;
     readonly listWithoutPag: <T>(params: IListWithoutPagParams) => Promise<[T | null, IErrorDict | null]>;
+    readonly aggregate: <T>(params: IAggregateParams) => Promise<[T | null, IErrorDict | null]>;
     readonly retrieve: <T>(params: IRetrieveParams) => Promise<[T | null, IErrorDict | null]>;
     readonly retrieveFile: (params: IRetrieveFileParams) => Promise<[IFileData | null, IErrorDict | null]>;
     readonly retrieveOptions: <T>(params: IRetrieveOptionsParams) => Promise<[T | null, IErrorDict | null]>;

@@ -5,6 +5,7 @@ const api_service_js_1 = require("./api-service.js");
 const build_request_params_js_1 = require("./build-request-params.js");
 const list_js_1 = require("../services/list.js");
 const list_without_pag_js_1 = require("../services/list-without-pag.js");
+const aggregate_js_1 = require("../services/aggregate.js");
 const retrieve_js_1 = require("../services/retrieve.js");
 const retrieve_options_js_1 = require("../services/retrieve-options.js");
 const retrieve_file_js_1 = require("../services/retrieve-file.js");
@@ -27,6 +28,7 @@ async function resolveToken(token) {
 class PumpwoodClient {
     list;
     listWithoutPag;
+    aggregate;
     retrieve;
     retrieveFile;
     retrieveOptions;
@@ -56,6 +58,10 @@ class PumpwoodClient {
         this.listWithoutPag = async (params) => {
             const { body, queryParams } = (0, build_request_params_js_1.buildListWithoutPagRequest)(params);
             return (0, list_without_pag_js_1.ListWithoutPagService)(await buildApi(), params.modelClass, body, queryParams);
+        };
+        this.aggregate = async (params) => {
+            const body = (0, build_request_params_js_1.buildAggregateRequest)(params);
+            return (0, aggregate_js_1.AggregateService)(await buildApi(), params.modelClass, body);
         };
         this.retrieve = async (params) => {
             const { modelClass, pk } = params;

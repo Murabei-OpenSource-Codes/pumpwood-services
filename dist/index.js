@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GetSSOTokenService = exports.LoginSSOService = exports.LoginService = exports.ExecuteStaticActionFileService = exports.ExecuteActionFileService = exports.ExecuteStaticActionService = exports.ExecuteActionService = exports.UploadFileService = exports.DeleteService = exports.SaveService = exports.RetrieveFileService = exports.RetrieveOptionsService = exports.RetrieveService = exports.ListWithoutPagService = exports.ListService = exports.PumpwoodClient = exports.ApiService = exports.safeAwait = exports.isUnauthorizedError = exports.normalizeToErrorDict = void 0;
+exports.GetSSOTokenService = exports.LoginSSOService = exports.LoginService = exports.ExecuteStaticActionFileService = exports.ExecuteActionFileService = exports.ExecuteStaticActionService = exports.ExecuteActionService = exports.UploadFileService = exports.DeleteService = exports.SaveService = exports.RetrieveFileService = exports.RetrieveOptionsService = exports.RetrieveService = exports.AggregateService = exports.ListWithoutPagService = exports.ListService = exports.PumpwoodClient = exports.ApiService = exports.safeAwait = exports.isUnauthorizedError = exports.normalizeToErrorDict = void 0;
 var error_js_1 = require("./src/types/error.js");
 Object.defineProperty(exports, "normalizeToErrorDict", { enumerable: true, get: function () { return error_js_1.normalizeToErrorDict; } });
 Object.defineProperty(exports, "isUnauthorizedError", { enumerable: true, get: function () { return error_js_1.isUnauthorizedError; } });
@@ -14,6 +14,8 @@ var list_js_1 = require("./src/services/list.js");
 Object.defineProperty(exports, "ListService", { enumerable: true, get: function () { return list_js_1.ListService; } });
 var list_without_pag_js_1 = require("./src/services/list-without-pag.js");
 Object.defineProperty(exports, "ListWithoutPagService", { enumerable: true, get: function () { return list_without_pag_js_1.ListWithoutPagService; } });
+var aggregate_js_1 = require("./src/services/aggregate.js");
+Object.defineProperty(exports, "AggregateService", { enumerable: true, get: function () { return aggregate_js_1.AggregateService; } });
 var retrieve_js_1 = require("./src/services/retrieve.js");
 Object.defineProperty(exports, "RetrieveService", { enumerable: true, get: function () { return retrieve_js_1.RetrieveService; } });
 var retrieve_options_js_1 = require("./src/services/retrieve-options.js");

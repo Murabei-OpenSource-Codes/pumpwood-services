@@ -7,6 +7,7 @@ exports.buildRetrieveQueryParams = buildRetrieveQueryParams;
 exports.buildUploadFileQueryParams = buildUploadFileQueryParams;
 exports.buildDeleteQueryParams = buildDeleteQueryParams;
 exports.buildRetrieveFileQueryParams = buildRetrieveFileQueryParams;
+exports.buildAggregateRequest = buildAggregateRequest;
 const DEFAULT_LIMIT = 50;
 const DEFAULT_DEFAULT_FIELDS = false;
 const DEFAULT_FOREIGN_KEY_FIELDS = true;
@@ -101,5 +102,20 @@ function buildRetrieveFileQueryParams(params) {
     appendQueryParam(queryParams, "base_filter_skip", params.base_filter_skip);
     appendExtraOptionsToQuery(queryParams, params.extraOptions);
     return queryParams;
+}
+/** Build POST body for the aggregate end-point. */
+function buildAggregateRequest(params) {
+    const { group_by, agg, filter_dict, exclude_dict, order_by, limit, show_deleted, extraOptions, } = params;
+    const normalizedGroupBy = typeof group_by === "string" ? [group_by] : group_by;
+    return {
+        agg,
+        group_by: normalizedGroupBy,
+        filter_dict: filter_dict ?? {},
+        exclude_dict: exclude_dict ?? {},
+        order_by: order_by ?? [],
+        show_deleted: show_deleted ?? false,
+        ...(limit !== undefined && { limit }),
+        ...extraOptions,
+    };
 }
 //# sourceMappingURL=build-request-params.js.map

@@ -1,4 +1,5 @@
 import type {
+  IAggregateParams,
   IDeleteParams,
   IExtraOptions,
   IListParams,
@@ -191,4 +192,34 @@ export function buildRetrieveFileQueryParams(
   appendQueryParam(queryParams, "base_filter_skip", params.base_filter_skip);
   appendExtraOptionsToQuery(queryParams, params.extraOptions);
   return queryParams;
+}
+
+/** Build POST body for the aggregate end-point. */
+export function buildAggregateRequest(
+  params: IAggregateParams,
+): Record<string, unknown> {
+  const {
+    group_by,
+    agg,
+    filter_dict,
+    exclude_dict,
+    order_by,
+    limit,
+    show_deleted,
+    extraOptions,
+  } = params;
+
+  const normalizedGroupBy =
+    typeof group_by === "string" ? [group_by] : group_by;
+
+  return {
+    agg,
+    group_by: normalizedGroupBy,
+    filter_dict: filter_dict ?? {},
+    exclude_dict: exclude_dict ?? {},
+    order_by: order_by ?? [],
+    show_deleted: show_deleted ?? false,
+    ...(limit !== undefined && { limit }),
+    ...extraOptions,
+  };
 }

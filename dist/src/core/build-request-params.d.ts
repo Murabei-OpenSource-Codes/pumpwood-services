@@ -1,4 +1,4 @@
-import type { IDeleteParams, IListParams, IListWithoutPagParams, IRetrieveFileParams, IRetrieveParams, ISaveParams, IUploadFileParams } from "../types/http.js";
+import type { IAggregateParams, IDeleteParams, IListParams, IListWithoutPagParams, IRetrieveFileParams, IRetrieveParams, ISaveParams, IUploadFileParams } from "../types/http.js";
 export interface IRequestParts {
     body: Record<string, unknown>;
     queryParams: Record<string, string>;
@@ -17,4 +17,6 @@ export declare function buildUploadFileQueryParams(params: IUploadFileParams): R
 export declare function buildDeleteQueryParams(params: IDeleteParams): Record<string, string>;
 /** Build extra query params for the retrieve-file end-point. */
 export declare function buildRetrieveFileQueryParams(params: IRetrieveFileParams): Record<string, string>;
+/** Build POST body for the aggregate end-point. */
+export declare function buildAggregateRequest(params: IAggregateParams): Record<string, unknown>;
 //# sourceMappingURL=build-request-params.d.ts.map

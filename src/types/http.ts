@@ -95,6 +95,38 @@ export interface IRetrieveOptionsParams {
   modelClass: string;
 }
 
+export type AggregateFunction =
+  | "sum"
+  | "mean"
+  | "count"
+  | "min"
+  | "max"
+  | "stddev_pop"
+  | "stddev_samp"
+  | "var_pop"
+  | "var_samp"
+  | "std"
+  | "var";
+
+export interface IAggregateSpec {
+  field: string;
+  function: AggregateFunction;
+}
+
+export type IAggregateAgg = Record<string, IAggregateSpec>;
+
+export interface IAggregateParams {
+  modelClass: string;
+  group_by: string | string[];
+  agg: IAggregateAgg;
+  filter_dict?: Record<string, unknown>;
+  exclude_dict?: Record<string, unknown>;
+  order_by?: string[];
+  limit?: number;
+  show_deleted?: boolean;
+  extraOptions?: IExtraOptions;
+}
+
 export interface ILoginResult {
   token: string;
 }
