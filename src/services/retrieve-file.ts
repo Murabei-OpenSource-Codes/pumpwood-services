@@ -11,6 +11,7 @@ import { safeAwait } from "../core/safe-await.js";
  * @param {string} modelClass - The name of the model class to retrieve from.
  * @param {number} pk - The primary key of the item to retrieve.
  * @param {string} fileField - The name of the file field to retrieve (default: "file").
+ * @param {Record<string, string>} [extraQueryParams] - Optional query parameters merged with the file-field one.
  * @returns {Promise<[IFileData | null, IErrorDict | null]>} A tuple containing the file data (blob) or an error.
  * 
  * @example
@@ -27,10 +28,11 @@ export const RetrieveFileService = async (
   api: ApiService,
   modelClass: string,
   pk: number,
-  fileField: string = "file"
+  fileField: string = "file",
+  extraQueryParams?: Record<string, string>
 ): Promise<[IFileData | null, IErrorDict | null]> => {
   const normalizedModelClass = modelClass.toLowerCase();
-  const queryParams = { "file-field": fileField };
+  const queryParams = { ...extraQueryParams, "file-field": fileField };
 
   const [response, error] = await safeAwait(
     api.fileRequest(`/${normalizedModelClass}/retrieve-file/${String(pk)}/`, queryParams)

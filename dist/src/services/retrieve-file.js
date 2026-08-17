@@ -10,6 +10,7 @@ const safe_await_js_1 = require("../core/safe-await.js");
  * @param {string} modelClass - The name of the model class to retrieve from.
  * @param {number} pk - The primary key of the item to retrieve.
  * @param {string} fileField - The name of the file field to retrieve (default: "file").
+ * @param {Record<string, string>} [extraQueryParams] - Optional query parameters merged with the file-field one.
  * @returns {Promise<[IFileData | null, IErrorDict | null]>} A tuple containing the file data (blob) or an error.
  *
  * @example
@@ -22,9 +23,9 @@ const safe_await_js_1 = require("../core/safe-await.js");
  *   URL.revokeObjectURL(url);
  * }
  */
-const RetrieveFileService = async (api, modelClass, pk, fileField = "file") => {
+const RetrieveFileService = async (api, modelClass, pk, fileField = "file", extraQueryParams) => {
     const normalizedModelClass = modelClass.toLowerCase();
-    const queryParams = { "file-field": fileField };
+    const queryParams = { ...extraQueryParams, "file-field": fileField };
     const [response, error] = await (0, safe_await_js_1.safeAwait)(api.fileRequest(`/${normalizedModelClass}/retrieve-file/${String(pk)}/`, queryParams));
     if (error) {
         console.error("==> RetrieveFileService ERROR:", error);

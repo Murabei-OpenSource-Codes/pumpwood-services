@@ -1,6 +1,6 @@
 export type { IErrorDict } from "./src/types/error.js";
 export { normalizeToErrorDict, isUnauthorizedError } from "./src/types/error.js";
-export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig, UnauthorizedHandler, IRetrieveOptions, ISaveOptions, ILoginResult, ILoginSSOResult, IGetSSOTokenUser, IGetSSOTokenResult } from "./src/types/http.js";
+export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig, UnauthorizedHandler, IExtraOptions, IListParams, IListWithoutPagParams, IRetrieveParams, ISaveParams, IUploadFileParams, IDeleteParams, IRetrieveFileParams, IRetrieveOptionsParams, ILoginResult, ILoginSSOResult, IGetSSOTokenUser, IGetSSOTokenResult, } from "./src/types/http.js";
 export { safeAwait } from "./src/core/safe-await.js";
 export { ApiService } from "./src/core/api-service.js";
 export { PumpwoodClient } from "./src/core/pumpwood-client.js";

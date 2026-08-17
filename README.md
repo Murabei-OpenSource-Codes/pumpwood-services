@@ -48,15 +48,87 @@ export const pumpwood = new PumpwoodClient({
 import { pumpwood } from "@/lib/pumpwood.server";
 
 export async function fetchVariable(id: string) {
-  const [data, error] = await pumpwood.retrieve<IMyModel>(
-    "mymodel",
-    Number.parseInt(id, 10),
-    { foreign_key_fields: true, related_fields: true },
-  );
+  const [data, error] = await pumpwood.retrieve<IMyModel>({
+    modelClass: "mymodel",
+    pk: Number.parseInt(id, 10),
+  });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Nenhum dado retornado");
   return data;
 }
+```
+
+---
+
+## Parâmetros achatados
+
+Todos os métodos CRUD recebem **um único objeto** com `modelClass` explícito
+e todos os demais parâmetros no **topo** — sem wrapper `body`. A única
+exceção é o payload arbitrário de `save` (`body`) e de `uploadFile`
+(`jsonData`), que ficam aninhados porque os campos do modelo colidiriam com
+os parâmetros de controle.
+
+```typescript
+await pumpwood.list({
+  modelClass: modelClass.DATA_INPUT_GEO_DATABASE_VARIABLE,
+  filter_dict: filters,
+  exclude_dict: { pk__in: excludePks },
+  fields: ["pk", "description"],
+  order_by: [ordering],
+  limit: PAGE_SIZE,
+  foreign_key_fields: false,
+  related_fields: false,
+});
+```
+
+O client decide o canal HTTP de cada parâmetro, alinhado ao backend
+Pumpwood:
+
+| Método | Canal dos parâmetros |
+| ------ | -------------------- |
+| `list`, `listWithoutPag` | POST body (exceto `base_filter_skip`, que vai na query) |
+| `retrieve`, `save`, `uploadFile`, `delete`, `retrieveFile` | query params |
+
+### Defaults
+
+| Campo | Default | Métodos |
+| ----- | ------- | ------- |
+| `filter_dict` | `{}` | `list`, `listWithoutPag` |
+| `exclude_dict` | `{}` | `list`, `listWithoutPag` |
+| `limit` | `50` | `list` |
+| `order_by` | omitido (sem ordenação explícita) | `list`, `listWithoutPag` |
+| `fields` | omitido (retorna o serializer completo) | todos |
+| `default_fields` | `false` | `list`, `listWithoutPag`, `retrieve`, `save` |
+| `foreign_key_fields` | `true` | `list`, `listWithoutPag`, `retrieve`, `save`, `uploadFile` |
+| `related_fields` | `true` | `list`, `listWithoutPag`, `retrieve`, `save`, `uploadFile` |
+
+Para trazer só o essencial, passe `foreign_key_fields: false` e
+`related_fields: false` explicitamente.
+
+### Paginação
+
+`list` **não** aceita `offset`. A paginação Pumpwood é feita excluindo as
+pks já carregadas:
+
+```typescript
+await pumpwood.list({
+  modelClass: "mymodel",
+  exclude_dict: { pk__in: loadedPks },
+  limit: 50,
+});
+```
+
+### `extraOptions`
+
+Escape hatch para qualquer parâmetro ainda não tipado pela lib. Os valores
+viajam pelo **mesmo canal** dos demais parâmetros do método (POST body em
+`list*`, query params nos outros):
+
+```typescript
+await pumpwood.list({
+  modelClass: "mymodel",
+  extraOptions: { novo_parametro_do_backend: true },
+});
 ```
 
 ---
@@ -66,17 +138,18 @@ export async function fetchVariable(id: string) {
 ### `list`
 
 ```typescript
-pumpwood.list<T>(modelClass, body?, queryParams?)
+pumpwood.list<T>(params: IListParams)
 ```
 
-`POST /{modelClass}/list/` — listagem paginada com filtros.
+`POST /{modelClass}/list/` — listagem paginada com filtros. `limit` default
+é `50`.
 
 ```typescript
-const [areas, error] = await pumpwood.list<GeoArea[]>("descriptiongeoarea", {
+const [areas, error] = await pumpwood.list<GeoArea[]>({
+  modelClass: "descriptiongeoarea",
   filter_dict: { is_active: true },
   order_by: ["-created_at"],
   limit: 20,
-  offset: 0,
 });
 if (error) throw new Error(error.message);
 ```
@@ -86,20 +159,18 @@ if (error) throw new Error(error.message);
 ### `listWithoutPag`
 
 ```typescript
-pumpwood.listWithoutPag<T>(modelClass, body?, queryParams?)
+pumpwood.listWithoutPag<T>(params: IListWithoutPagParams)
 ```
 
-`POST /{modelClass}/list-without-pag/` — retorna **todos** os resultados sem paginação. Use para datasets pequenos (lookups, combos, versões).
+`POST /{modelClass}/list-without-pag/` — retorna **todos** os resultados sem paginação. Use para datasets pequenos (lookups, combos, versões). Não aceita `limit`.
 
 ```typescript
-const [allAreas, error] = await pumpwood.listWithoutPag<GeoArea[]>(
-  "descriptiongeoarea",
-  {
-    filter_dict: { is_active: true },
-    fields: ["pk", "name"],
-    order_by: ["name"],
-  },
-);
+const [allAreas, error] = await pumpwood.listWithoutPag<GeoArea[]>({
+  modelClass: "descriptiongeoarea",
+  filter_dict: { is_active: true },
+  fields: ["pk", "name"],
+  order_by: ["name"],
+});
 if (error) throw new Error(error.message);
 ```
 
@@ -108,20 +179,26 @@ if (error) throw new Error(error.message);
 ### `retrieve`
 
 ```typescript
-pumpwood.retrieve<T>(modelClass, pk, options?)
+pumpwood.retrieve<T>(params: IRetrieveParams)
 ```
 
-`GET /{modelClass}/retrieve/{pk}/` — busca um registro por pk.
-
-`options` aceita booleans diretamente (convertidos para query params internamente):
+`GET /{modelClass}/retrieve/{pk}/` — busca um registro por pk. Por padrão
+expande foreign keys e related fields.
 
 ```typescript
-const [area, error] = await pumpwood.retrieve<GeoArea>(
-  "descriptiongeoarea",
-  1,
-  { foreign_key_fields: true, related_fields: true },
-);
+const [area, error] = await pumpwood.retrieve<GeoArea>({
+  modelClass: "descriptiongeoarea",
+  pk: 1,
+});
 if (error) throw new Error(error.message);
+
+// opt-out
+const [areaLight, lightError] = await pumpwood.retrieve<GeoArea>({
+  modelClass: "descriptiongeoarea",
+  pk: 1,
+  foreign_key_fields: false,
+  related_fields: false,
+});
 ```
 
 ---
@@ -129,13 +206,15 @@ if (error) throw new Error(error.message);
 ### `retrieveOptions`
 
 ```typescript
-pumpwood.retrieveOptions<T>(modelClass, body?)
+pumpwood.retrieveOptions<T>(params: IRetrieveOptionsParams)
 ```
 
 `POST /{modelClass}/retrieve-options/` — busca definições de campos, choices e regras de validação do modelo.
 
 ```typescript
-const [options, error] = await pumpwood.retrieveOptions("descriptiongeoarea");
+const [options, error] = await pumpwood.retrieveOptions({
+  modelClass: "descriptiongeoarea",
+});
 if (error) throw new Error(error.message);
 ```
 
@@ -144,32 +223,49 @@ if (error) throw new Error(error.message);
 ### `save`
 
 ```typescript
-pumpwood.save<T>(modelClass, body, options?)
+pumpwood.save<T>(params: ISaveParams)
 ```
 
 `POST /{modelClass}/save/` — cria se `pk=null`, atualiza se `pk` existe.
 
 ```typescript
-const [saved, error] = await pumpwood.save<GeoArea>(
-  "descriptiongeoarea",
-  { pk: null, name: "Nova Área" },
-  { foreign_key_fields: true },
-);
+const [saved, error] = await pumpwood.save<GeoArea>({
+  modelClass: "descriptiongeoarea",
+  body: { pk: null, name: "Nova Área" },
+});
 if (error) throw new Error(error.message);
+
+// opt-out
+const [savedLight, saveLightError] = await pumpwood.save<GeoArea>({
+  modelClass: "descriptiongeoarea",
+  body: { pk: null, name: "Nova Área" },
+  foreign_key_fields: false,
+  related_fields: false,
+});
 ```
+
+O `body` é o payload do modelo; os parâmetros de controle (`fields`,
+`foreign_key_fields`, `related_fields`, `default_fields`,
+`base_filter_skip`, `extraOptions`) ficam no topo e viajam como query
+params.
 
 ---
 
 ### `delete`
 
 ```typescript
-pumpwood.delete<T>(modelClass, pk);
+pumpwood.delete<T>(params: IDeleteParams);
 ```
 
-`DELETE /{modelClass}/delete/{pk}/`
+`DELETE /{modelClass}/delete/{pk}/` — aceita `force_delete` e
+`base_filter_skip` como query params.
 
 ```typescript
-const [, error] = await pumpwood.delete("descriptiongeoarea", 1);
+const [, error] = await pumpwood.delete({
+  modelClass: "descriptiongeoarea",
+  pk: 1,
+  force_delete: true,
+});
 if (error) throw new Error(error.message);
 ```
 
@@ -178,18 +274,31 @@ if (error) throw new Error(error.message);
 ### `uploadFile`
 
 ```typescript
-pumpwood.uploadFile<T>(modelClass, file, jsonData, queryParams?)
+pumpwood.uploadFile<T>(params: IUploadFileParams)
 ```
 
 `POST /{modelClass}/save/` via `multipart/form-data`. O arquivo é enviado como `"file"` e os dados JSON como `"__json__"`.
 
 ```typescript
 const file = new File(["conteúdo"], "data.csv", { type: "text/csv" });
-const [result, error] = await pumpwood.uploadFile("documents", file, {
-  origin: "USER_UPLOAD",
-  format_type: "MELTED",
+const [result, error] = await pumpwood.uploadFile({
+  modelClass: "documents",
+  file,
+  jsonData: {
+    origin: "USER_UPLOAD",
+    format_type: "MELTED",
+  },
 });
 if (error) throw new Error(error.message);
+
+// opt-out
+const [resultLight, uploadError] = await pumpwood.uploadFile({
+  modelClass: "documents",
+  file,
+  jsonData: { origin: "USER_UPLOAD" },
+  foreign_key_fields: false,
+  related_fields: false,
+});
 ```
 
 ---
@@ -197,7 +306,7 @@ if (error) throw new Error(error.message);
 ### `retrieveFile`
 
 ```typescript
-pumpwood.retrieveFile(modelClass, pk, fileField?)
+pumpwood.retrieveFile(params: IRetrieveFileParams)
 ```
 
 `GET /{modelClass}/retrieve-file/{pk}/?file-field={fileField}` — retorna `IFileData` (`{ blob, contentType }`).
@@ -205,7 +314,11 @@ pumpwood.retrieveFile(modelClass, pk, fileField?)
 ⚠️ **Sempre use `try/finally` para revogar o URL e evitar memory leak:**
 
 ```typescript
-const [fileData, error] = await pumpwood.retrieveFile("documents", 42, "file");
+const [fileData, error] = await pumpwood.retrieveFile({
+  modelClass: "documents",
+  pk: 42,
+  fileField: "file",
+});
 if (error) throw new Error(error.message);
 
 const url = URL.createObjectURL(fileData!.blob);
@@ -441,7 +554,10 @@ export const pumpwood = new PumpwoodClient({
 Uso normal — a lib chama `onUnauthorized` automaticamente antes de retornar o erro:
 
 ```typescript
-const [data, error] = await pumpwood.list("mymodel", filter);
+const [data, error] = await pumpwood.list({
+  modelClass: "mymodel",
+  filter_dict: filter,
+});
 if (error) throw new Error(error.message);
 ```
 
@@ -473,8 +589,15 @@ O campo `error.status` (401) e o helper `isUnauthorizedError(error)` também est
 | `IErrorDict`            | Formato padronizado de erro: `{ message, type, payload, status?, ... }`           |
 | `UnauthorizedHandler`   | Callback `() => void \| Promise<void>` para sessão expirada (401)                  |
 | `IFileData`             | Dados de arquivo: `{ blob: Blob, contentType: string }`                          |
-| `IRetrieveOptions`      | Opções para `retrieve` e `save`: `{ foreign_key_fields?, related_fields?, ... }` |
-| `ISaveOptions`          | Alias tipado para opções de `save` (mesma forma que `IRetrieveOptions`)          |
+| `IExtraOptions`          | `Record<string, unknown>` — parâmetros não tipados pela lib  |
+| `IListParams`            | `{ modelClass, filter_dict?, exclude_dict?, order_by?, fields?, default_fields?, limit?, foreign_key_fields?, related_fields?, base_filter_skip?, extraOptions? }` |
+| `IListWithoutPagParams`  | `IListParams` sem `limit`                                   |
+| `IRetrieveParams`        | `{ modelClass, pk, fields?, default_fields?, foreign_key_fields?, related_fields?, base_filter_skip?, extraOptions? }` |
+| `ISaveParams`            | `IRetrieveParams` sem `pk`, com `body` obrigatório          |
+| `IUploadFileParams`      | `{ modelClass, file, jsonData, foreign_key_fields?, related_fields?, extraOptions? }` |
+| `IDeleteParams`          | `{ modelClass, pk, force_delete?, base_filter_skip?, extraOptions? }` |
+| `IRetrieveFileParams`    | `{ modelClass, pk, fileField?, base_filter_skip?, extraOptions? }` |
+| `IRetrieveOptionsParams` | `{ modelClass }`                                            |
 | `IPumpwoodClientConfig` | Config do `PumpwoodClient`: `{ baseUrl, token, onUnauthorized? }`                |
 | `TokenProvider`         | `string` ou `() => string \| Promise<string>`                                    |
 | `ApiServiceConfig`      | Config do `ApiService`: `{ baseUrl, token, onUnauthorized? }`                    |
@@ -483,6 +606,22 @@ O campo `error.status` (401) e o helper `isUnauthorizedError(error)` também est
 | `ILoginSSOResult`       | Resultado de `loginWithSSO`: `{ redirect_url: string }`                          |
 | `IGetSSOTokenUser`      | Dados do usuário SSO: `{ email: string, username: string }`                      |
 | `IGetSSOTokenResult`    | Resultado de `getSSOToken`: `{ token: string, user: IGetSSOTokenUser }`          |
+
+---
+
+## Migração da API aninhada
+
+| Antes | Depois |
+| ----- | ------ |
+| `list({ modelClass, body: { filter_dict } })` | `list({ modelClass, filter_dict })` |
+| `list({ modelClass, body: { options: { foreign_key_fields: false } } })` | `list({ modelClass, foreign_key_fields: false })` |
+| `retrieve({ modelClass, pk, options: { ... } })` | `retrieve({ modelClass, pk, foreign_key_fields: false })` |
+| `save({ modelClass, body, options: { ... } })` | `save({ modelClass, body, foreign_key_fields: false })` |
+| `list({ modelClass, body: { offset } })` | `list({ modelClass, exclude_dict: { pk__in: [...] } })` |
+
+`offset` e `convert_geometry` foram removidos: o primeiro não existe no
+endpoint de list do Pumpwood e o segundo é uma conversão client-side do
+cliente Python, sem equivalente em TypeScript.
 
 ---
 

@@ -9,6 +9,7 @@ import type { ApiService } from "../core/api-service.js";
  * @param {string} modelClass - The name of the model class to retrieve from.
  * @param {number} pk - The primary key of the item to retrieve.
  * @param {string} fileField - The name of the file field to retrieve (default: "file").
+ * @param {Record<string, string>} [extraQueryParams] - Optional query parameters merged with the file-field one.
  * @returns {Promise<[IFileData | null, IErrorDict | null]>} A tuple containing the file data (blob) or an error.
  *
  * @example
@@ -21,5 +22,5 @@ import type { ApiService } from "../core/api-service.js";
  *   URL.revokeObjectURL(url);
  * }
  */
-export declare const RetrieveFileService: (api: ApiService, modelClass: string, pk: number, fileField?: string) => Promise<[IFileData | null, IErrorDict | null]>;
+export declare const RetrieveFileService: (api: ApiService, modelClass: string, pk: number, fileField?: string, extraQueryParams?: Record<string, string>) => Promise<[IFileData | null, IErrorDict | null]>;
 //# sourceMappingURL=retrieve-file.d.ts.map

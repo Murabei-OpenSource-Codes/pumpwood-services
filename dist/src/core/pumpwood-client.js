@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PumpwoodClient = void 0;
 const api_service_js_1 = require("./api-service.js");
+const build_request_params_js_1 = require("./build-request-params.js");
 const list_js_1 = require("../services/list.js");
 const list_without_pag_js_1 = require("../services/list-without-pag.js");
 const retrieve_js_1 = require("../services/retrieve.js");
@@ -22,15 +23,6 @@ async function resolveToken(token) {
         return await token();
     }
     return token;
-}
-function optionsToQueryParams(options) {
-    const result = {};
-    for (const [key, value] of Object.entries(options)) {
-        if (value === undefined || value === null)
-            continue;
-        result[key] = String(value);
-    }
-    return result;
 }
 class PumpwoodClient {
     list;
@@ -57,30 +49,38 @@ class PumpwoodClient {
                 ...(onUnauthorized !== undefined && { onUnauthorized }),
             });
         };
-        this.list = async (modelClass, body, queryParams) => {
-            return (0, list_js_1.ListService)(await buildApi(), modelClass, body, queryParams);
+        this.list = async (params) => {
+            const { body, queryParams } = (0, build_request_params_js_1.buildListRequest)(params);
+            return (0, list_js_1.ListService)(await buildApi(), params.modelClass, body, queryParams);
         };
-        this.listWithoutPag = async (modelClass, body, queryParams) => {
-            return (0, list_without_pag_js_1.ListWithoutPagService)(await buildApi(), modelClass, body, queryParams);
+        this.listWithoutPag = async (params) => {
+            const { body, queryParams } = (0, build_request_params_js_1.buildListWithoutPagRequest)(params);
+            return (0, list_without_pag_js_1.ListWithoutPagService)(await buildApi(), params.modelClass, body, queryParams);
         };
-        this.retrieve = async (modelClass, pk, options) => {
-            const queryParams = options ? optionsToQueryParams(options) : undefined;
+        this.retrieve = async (params) => {
+            const { modelClass, pk } = params;
+            const queryParams = (0, build_request_params_js_1.buildRetrieveQueryParams)(params);
             return (0, retrieve_js_1.RetrieveService)(await buildApi(), modelClass, pk, queryParams);
         };
-        this.retrieveFile = async (modelClass, pk, fileField) => {
-            return (0, retrieve_file_js_1.RetrieveFileService)(await buildApi(), modelClass, pk, fileField);
+        this.retrieveFile = async (params) => {
+            const { modelClass, pk, fileField } = params;
+            const queryParams = (0, build_request_params_js_1.buildRetrieveFileQueryParams)(params);
+            return (0, retrieve_file_js_1.RetrieveFileService)(await buildApi(), modelClass, pk, fileField, queryParams);
         };
-        this.retrieveOptions = async (modelClass, body) => {
-            return (0, retrieve_options_js_1.RetrieveOptionsService)(await buildApi(), modelClass, body);
+        this.retrieveOptions = async ({ modelClass }) => {
+            return (0, retrieve_options_js_1.RetrieveOptionsService)(await buildApi(), modelClass);
         };
-        this.save = async (modelClass, body, options) => {
-            const queryParams = options ? optionsToQueryParams(options) : undefined;
-            return (0, save_js_1.SaveService)(await buildApi(), modelClass, body, queryParams);
+        this.save = async (params) => {
+            const { body, queryParams } = (0, build_request_params_js_1.buildSaveRequest)(params);
+            return (0, save_js_1.SaveService)(await buildApi(), params.modelClass, body, queryParams);
         };
-        this.delete = async (modelClass, pk) => {
-            return (0, delete_js_1.DeleteService)(await buildApi(), modelClass, pk);
+        this.delete = async (params) => {
+            const queryParams = (0, build_request_params_js_1.buildDeleteQueryParams)(params);
+            return (0, delete_js_1.DeleteService)(await buildApi(), params.modelClass, params.pk, queryParams);
         };
-        this.uploadFile = async (modelClass, file, jsonData, queryParams) => {
+        this.uploadFile = async (params) => {
+            const { modelClass, file, jsonData } = params;
+            const queryParams = (0, build_request_params_js_1.buildUploadFileQueryParams)(params);
             return (0, upload_js_1.UploadFileService)(await buildApi(), modelClass, file, jsonData, queryParams);
         };
         this.executeAction = async ({ modelClass, pk, actionName, parameters, queryParams }) => {
