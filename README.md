@@ -86,28 +86,36 @@ Pumpwood:
 
 | Método | Canal dos parâmetros |
 | ------ | -------------------- |
-| `list`, `listWithoutPag`, `aggregate` | POST body (exceto `base_filter_skip`, que vai na query em `list*`) |
+| `list`, `listWithoutPag`, `listByChunks`, `aggregate` | POST body (exceto `base_filter_skip`, que vai na query em `list*`) |
 | `retrieve`, `save`, `uploadFile`, `delete`, `retrieveFile` | query params |
 
 ### Defaults
 
 | Campo | Default | Métodos |
 | ----- | ------- | ------- |
-| `filter_dict` | `{}` | `list`, `listWithoutPag`, `aggregate` |
-| `exclude_dict` | `{}` | `list`, `listWithoutPag`, `aggregate` |
+| `filter_dict` | `{}` | `list`, `listWithoutPag`, `listByChunks`, `aggregate` |
+| `exclude_dict` | `{}` | `list`, `listWithoutPag`, `listByChunks`, `aggregate` |
 | `limit` | `50` | `list` |
+| `chunkSize` | `100` | `listByChunks` |
+| `maxItems` | omitido (sem limite total) | `listByChunks` |
 | `order_by` | omitido (sem ordenação explícita) | `list`, `listWithoutPag` |
 | `order_by` | `[]` | `aggregate` |
 | `show_deleted` | `false` | `aggregate` |
 | `fields` | omitido (retorna o serializer completo) | todos |
-| `default_fields` | `false` | `list`, `listWithoutPag`, `retrieve`, `save` |
-| `foreign_key_fields` | `true` | `list`, `listWithoutPag`, `retrieve`, `save`, `uploadFile` |
-| `related_fields` | `true` | `list`, `listWithoutPag`, `retrieve`, `save`, `uploadFile` |
+| `default_fields` | `false` | `list`, `listWithoutPag`, `listByChunks`, `retrieve`, `save` |
+| `foreign_key_fields` | `true` | `list`, `listWithoutPag`, `listByChunks`, `retrieve`, `save`, `uploadFile` |
+| `related_fields` | `true` | `list`, `listWithoutPag`, `listByChunks`, `retrieve`, `save`, `uploadFile` |
 
 Para trazer só o essencial, passe `foreign_key_fields: false` e
 `related_fields: false` explicitamente.
 
 ### Paginação
+
+| Método | Quando usar |
+| ------ | ----------- |
+| `list` | UI paginada / load more manual (`exclude_dict.pk__in`) |
+| `listByChunks` | Buscar o conjunto completo em chunks (FK selects, exports) |
+| `listWithoutPag` | Datasets pequenos conhecidos, um único request |
 
 `list` **não** aceita `offset`. A paginação Pumpwood é feita excluindo as
 pks já carregadas:
@@ -155,6 +163,35 @@ const [areas, error] = await pumpwood.list<GeoArea[]>({
 });
 if (error) throw new Error(error.message);
 ```
+
+---
+
+### `listByChunks`
+
+```typescript
+pumpwood.listByChunks<T>(params: IListByChunksParams)
+```
+
+Busca **todos** os registros de uma query com múltiplas chamadas a
+`POST /{modelClass}/list/`, paginando por cursor `filter_dict.id__gt` e
+`order_by: ["id"]`. Espelha `list_by_chunks` do pumpwood-communication.
+
+Não aceita `order_by` customizado. Use `chunkSize` para o tamanho de cada
+request (default `100`) e `maxItems` opcional para limitar o total retornado
+(sem erro — para quando o frontend precisa de trava, ex. `1000`).
+
+```typescript
+const [allAreas, error] = await pumpwood.listByChunks<GeoArea[]>({
+  modelClass: "descriptiongeoarea",
+  filter_dict: { is_active: true },
+  fields: ["pk", "id", "name"],
+  chunkSize: 100,
+  maxItems: 1000,
+});
+if (error) throw new Error(error.message);
+```
+
+Modelos com composite PK (`pk` string) devem incluir `id` em `fields`.
 
 ---
 
@@ -631,6 +668,7 @@ O campo `error.status` (401) e o helper `isUnauthorizedError(error)` também est
 | `IExtraOptions`          | `Record<string, unknown>` — parâmetros não tipados pela lib  |
 | `IListParams`            | `{ modelClass, filter_dict?, exclude_dict?, order_by?, fields?, default_fields?, limit?, foreign_key_fields?, related_fields?, base_filter_skip?, extraOptions? }` |
 | `IListWithoutPagParams`  | `IListParams` sem `limit`                                   |
+| `IListByChunksParams`    | `IListParams` sem `limit` / `order_by`; `chunkSize?`, `maxItems?` |
 | `IRetrieveParams`        | `{ modelClass, pk, fields?, default_fields?, foreign_key_fields?, related_fields?, base_filter_skip?, extraOptions? }` |
 | `ISaveParams`            | `IRetrieveParams` sem `pk`, com `body` obrigatório          |
 | `IUploadFileParams`      | `{ modelClass, file, jsonData, foreign_key_fields?, related_fields?, extraOptions? }` |
