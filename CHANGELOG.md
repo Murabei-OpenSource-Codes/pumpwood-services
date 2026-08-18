@@ -9,6 +9,20 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
 
+## [2.1.0] - 2026-08-18
+
+### Added
+- `PumpwoodClient.listDimensions` and `ListDimensionsService` — POST
+  `/{modelClass}/list-dimensions/` with `filter_dict` and
+  `exclude_dict`
+- `PumpwoodClient.listDimensionValues` and `ListDimensionValuesService`
+  — POST `/{modelClass}/list-dimension-values/` with `filter_dict`,
+  `exclude_dict`, and `key`
+- `IListDimensionsParams` and `IListDimensionValuesParams`
+- `buildListDimensionsRequest` and `buildListDimensionValuesRequest`
+  in `build-request-params`
+
+
 ## [2.0.0] - 2026-08-17
 
 Breaking client API: CRUD methods take one flattened params

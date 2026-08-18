@@ -7,6 +7,8 @@ import type {
   IListParams,
   IListWithoutPagParams,
   IListByChunksParams,
+  IListDimensionsParams,
+  IListDimensionValuesParams,
   IRetrieveParams,
   ISaveParams,
   IUploadFileParams,
@@ -21,6 +23,8 @@ import { ApiService } from "./api-service.js";
 import {
   buildAggregateRequest,
   buildDeleteQueryParams,
+  buildListDimensionValuesRequest,
+  buildListDimensionsRequest,
   buildListRequest,
   buildListWithoutPagRequest,
   buildRetrieveFileQueryParams,
@@ -31,6 +35,8 @@ import {
 import { ListService } from "../services/list.js";
 import { ListWithoutPagService } from "../services/list-without-pag.js";
 import { ListByChunksService } from "../services/list-by-chunks.js";
+import { ListDimensionsService } from "../services/list-dimensions.js";
+import { ListDimensionValuesService } from "../services/list-dimension-values.js";
 import { AggregateService } from "../services/aggregate.js";
 import { RetrieveService } from "../services/retrieve.js";
 import { RetrieveOptionsService } from "../services/retrieve-options.js";
@@ -59,6 +65,8 @@ export class PumpwoodClient {
   readonly list: <T>(params: IListParams) => Promise<[T | null, IErrorDict | null]>;
   readonly listWithoutPag: <T>(params: IListWithoutPagParams) => Promise<[T | null, IErrorDict | null]>;
   readonly listByChunks: <T>(params: IListByChunksParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly listDimensions: <T = string[]>(params: IListDimensionsParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly listDimensionValues: <T = unknown[]>(params: IListDimensionValuesParams) => Promise<[T | null, IErrorDict | null]>;
   readonly aggregate: <T>(params: IAggregateParams) => Promise<[T | null, IErrorDict | null]>;
   readonly retrieve: <T>(params: IRetrieveParams) => Promise<[T | null, IErrorDict | null]>;
   readonly retrieveFile: (params: IRetrieveFileParams) => Promise<[IFileData | null, IErrorDict | null]>;
@@ -96,6 +104,16 @@ export class PumpwoodClient {
 
     this.listByChunks = async <T>(params: IListByChunksParams) => {
       return ListByChunksService<T>(await buildApi(), params);
+    };
+
+    this.listDimensions = async <T = string[]>(params: IListDimensionsParams) => {
+      const { body, queryParams } = buildListDimensionsRequest(params);
+      return ListDimensionsService<T>(await buildApi(), params.modelClass, body, queryParams);
+    };
+
+    this.listDimensionValues = async <T = unknown[]>(params: IListDimensionValuesParams) => {
+      const { body, queryParams } = buildListDimensionValuesRequest(params);
+      return ListDimensionValuesService<T>(await buildApi(), params.modelClass, body, queryParams);
     };
 
     this.aggregate = async <T>(params: IAggregateParams) => {

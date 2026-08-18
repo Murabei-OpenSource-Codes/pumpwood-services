@@ -102,6 +102,23 @@ export interface IRetrieveOptionsParams {
   modelClass: string;
 }
 
+export interface IListDimensionsParams {
+  modelClass: string;
+  filter_dict?: Record<string, unknown>;
+  exclude_dict?: Record<string, unknown>;
+  base_filter_skip?: string[];
+  extraOptions?: IExtraOptions;
+}
+
+export interface IListDimensionValuesParams {
+  modelClass: string;
+  key: string;
+  filter_dict?: Record<string, unknown>;
+  exclude_dict?: Record<string, unknown>;
+  base_filter_skip?: string[];
+  extraOptions?: IExtraOptions;
+}
+
 export type AggregateFunction =
   | "sum"
   | "mean"
