@@ -6,6 +6,7 @@ import type {
   IGetSSOTokenResult,
   IListParams,
   IListWithoutPagParams,
+  IListByChunksParams,
   IRetrieveParams,
   ISaveParams,
   IUploadFileParams,
@@ -29,6 +30,7 @@ import {
 } from "./build-request-params.js";
 import { ListService } from "../services/list.js";
 import { ListWithoutPagService } from "../services/list-without-pag.js";
+import { ListByChunksService } from "../services/list-by-chunks.js";
 import { AggregateService } from "../services/aggregate.js";
 import { RetrieveService } from "../services/retrieve.js";
 import { RetrieveOptionsService } from "../services/retrieve-options.js";
@@ -56,6 +58,7 @@ async function resolveToken(token: TokenProvider): Promise<string> {
 export class PumpwoodClient {
   readonly list: <T>(params: IListParams) => Promise<[T | null, IErrorDict | null]>;
   readonly listWithoutPag: <T>(params: IListWithoutPagParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly listByChunks: <T>(params: IListByChunksParams) => Promise<[T | null, IErrorDict | null]>;
   readonly aggregate: <T>(params: IAggregateParams) => Promise<[T | null, IErrorDict | null]>;
   readonly retrieve: <T>(params: IRetrieveParams) => Promise<[T | null, IErrorDict | null]>;
   readonly retrieveFile: (params: IRetrieveFileParams) => Promise<[IFileData | null, IErrorDict | null]>;
@@ -89,6 +92,10 @@ export class PumpwoodClient {
     this.listWithoutPag = async <T>(params: IListWithoutPagParams) => {
       const { body, queryParams } = buildListWithoutPagRequest(params);
       return ListWithoutPagService<T>(await buildApi(), params.modelClass, body, queryParams);
+    };
+
+    this.listByChunks = async <T>(params: IListByChunksParams) => {
+      return ListByChunksService<T>(await buildApi(), params);
     };
 
     this.aggregate = async <T>(params: IAggregateParams) => {

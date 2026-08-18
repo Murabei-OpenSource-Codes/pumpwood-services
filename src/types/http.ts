@@ -44,6 +44,13 @@ export interface IListParams {
 
 export type IListWithoutPagParams = Omit<IListParams, "limit">;
 
+export interface IListByChunksParams extends Omit<IListParams, "limit" | "order_by"> {
+  /** Records per request (default: 100). */
+  chunkSize?: number;
+  /** Optional total cap; when reached, stops and returns (no error). */
+  maxItems?: number;
+}
+
 export interface IRetrieveParams {
   modelClass: string;
   pk: number;
