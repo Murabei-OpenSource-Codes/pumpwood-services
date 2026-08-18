@@ -8,6 +8,7 @@ import { safeAwait } from "../core/safe-await.js";
  * @param {ApiService} api - An instance of the ApiService.
  * @param {string} modelClass - The name of the model class to delete from.
  * @param {number} pk - The primary key of the item to delete.
+ * @param {Record<string, string>} [queryParams] - Optional query parameters to append to the URL.
  * @returns {Promise<[T | null, IErrorDict | null]>} A tuple containing the response data or an error, consistent with safeAwait.
  * 
  * @example
@@ -18,12 +19,18 @@ import { safeAwait } from "../core/safe-await.js";
 export const DeleteService = async <T = void>(
   api: ApiService,
   modelClass: string,
-  pk: number
+  pk: number,
+  queryParams?: Record<string, string>
 ): Promise<[T | null, IErrorDict | null]> => {
   const normalizedModelClass = modelClass.toLowerCase();
 
   const [response, error] = await safeAwait(
-    api.request<T>("DELETE", `/${normalizedModelClass}/delete/${String(pk)}/`)
+    api.request<T>(
+      "DELETE",
+      `/${normalizedModelClass}/delete/${String(pk)}/`,
+      undefined,
+      queryParams
+    )
   );
 
   if (error) {

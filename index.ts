@@ -1,11 +1,38 @@
 export type { IErrorDict } from "./src/types/error.js";
 export { normalizeToErrorDict, isUnauthorizedError } from "./src/types/error.js";
-export type { HttpMethod, IFileData, ApiServiceConfig, TokenProvider, IPumpwoodClientConfig, UnauthorizedHandler, IRetrieveOptions, ISaveOptions, ILoginResult, ILoginSSOResult, IGetSSOTokenUser, IGetSSOTokenResult } from "./src/types/http.js";
+export type {
+  HttpMethod,
+  IFileData,
+  ApiServiceConfig,
+  TokenProvider,
+  IPumpwoodClientConfig,
+  UnauthorizedHandler,
+  IExtraOptions,
+  IListParams,
+  IListWithoutPagParams,
+  IListByChunksParams,
+  IRetrieveParams,
+  ISaveParams,
+  IUploadFileParams,
+  IDeleteParams,
+  IRetrieveFileParams,
+  IRetrieveOptionsParams,
+  AggregateFunction,
+  IAggregateSpec,
+  IAggregateAgg,
+  IAggregateParams,
+  ILoginResult,
+  ILoginSSOResult,
+  IGetSSOTokenUser,
+  IGetSSOTokenResult,
+} from "./src/types/http.js";
 export { safeAwait } from "./src/core/safe-await.js";
 export { ApiService } from "./src/core/api-service.js";
 export { PumpwoodClient } from "./src/core/pumpwood-client.js";
 export { ListService } from "./src/services/list.js";
 export { ListWithoutPagService } from "./src/services/list-without-pag.js";
+export { ListByChunksService } from "./src/services/list-by-chunks.js";
+export { AggregateService } from "./src/services/aggregate.js";
 export { RetrieveService } from "./src/services/retrieve.js";
 export { RetrieveOptionsService } from "./src/services/retrieve-options.js";
 export { RetrieveFileService } from "./src/services/retrieve-file.js";

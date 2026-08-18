@@ -1,8 +1,37 @@
-import type { IFileData, IPumpwoodClientConfig, ILoginResult, ILoginSSOResult, IGetSSOTokenResult, IRetrieveOptions, ISaveOptions, TokenProvider } from "../types/http.js";
+import type {
+  IFileData,
+  IPumpwoodClientConfig,
+  ILoginResult,
+  ILoginSSOResult,
+  IGetSSOTokenResult,
+  IListParams,
+  IListWithoutPagParams,
+  IListByChunksParams,
+  IRetrieveParams,
+  ISaveParams,
+  IUploadFileParams,
+  IDeleteParams,
+  IRetrieveFileParams,
+  IRetrieveOptionsParams,
+  IAggregateParams,
+  TokenProvider,
+} from "../types/http.js";
 import type { IErrorDict } from "../types/error.js";
 import { ApiService } from "./api-service.js";
+import {
+  buildAggregateRequest,
+  buildDeleteQueryParams,
+  buildListRequest,
+  buildListWithoutPagRequest,
+  buildRetrieveFileQueryParams,
+  buildRetrieveQueryParams,
+  buildSaveRequest,
+  buildUploadFileQueryParams,
+} from "./build-request-params.js";
 import { ListService } from "../services/list.js";
 import { ListWithoutPagService } from "../services/list-without-pag.js";
+import { ListByChunksService } from "../services/list-by-chunks.js";
+import { AggregateService } from "../services/aggregate.js";
 import { RetrieveService } from "../services/retrieve.js";
 import { RetrieveOptionsService } from "../services/retrieve-options.js";
 import { RetrieveFileService } from "../services/retrieve-file.js";
@@ -26,26 +55,17 @@ async function resolveToken(token: TokenProvider): Promise<string> {
   return token;
 }
 
-function optionsToQueryParams(
-  options: Record<string, boolean | string | number | undefined>
-): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const [key, value] of Object.entries(options)) {
-    if (value === undefined || value === null) continue;
-    result[key] = String(value);
-  }
-  return result;
-}
-
 export class PumpwoodClient {
-  readonly list: <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
-  readonly listWithoutPag: <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
-  readonly retrieve: <T>(modelClass: string, pk: number, options?: IRetrieveOptions) => Promise<[T | null, IErrorDict | null]>;
-  readonly retrieveFile: (modelClass: string, pk: number, fileField?: string) => Promise<[IFileData | null, IErrorDict | null]>;
-  readonly retrieveOptions: <T>(modelClass: string, body?: Record<string, any>) => Promise<[T | null, IErrorDict | null]>;
-  readonly save: <T>(modelClass: string, body: Record<any, any>, options?: ISaveOptions) => Promise<[T | null, IErrorDict | null]>;
-  readonly delete: <T = void>(modelClass: string, pk: number) => Promise<[T | null, IErrorDict | null]>;
-  readonly uploadFile: <T>(modelClass: string, file: File, jsonData: Record<string, any>, queryParams?: Record<string, string>) => Promise<[T | null, IErrorDict | null]>;
+  readonly list: <T>(params: IListParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly listWithoutPag: <T>(params: IListWithoutPagParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly listByChunks: <T>(params: IListByChunksParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly aggregate: <T>(params: IAggregateParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly retrieve: <T>(params: IRetrieveParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly retrieveFile: (params: IRetrieveFileParams) => Promise<[IFileData | null, IErrorDict | null]>;
+  readonly retrieveOptions: <T>(params: IRetrieveOptionsParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly save: <T>(params: ISaveParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly delete: <T = void>(params: IDeleteParams) => Promise<[T | null, IErrorDict | null]>;
+  readonly uploadFile: <T>(params: IUploadFileParams) => Promise<[T | null, IErrorDict | null]>;
   readonly executeAction: <T = any>(params: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[T | null, IErrorDict | null]>;
   readonly executeStaticAction: <T = any>(params: { modelClass: string; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[T | null, IErrorDict | null]>;
   readonly executeActionFile: (params: { modelClass: string; pk: number; actionName: string; parameters?: Record<string, any>; queryParams?: Record<string, string> }) => Promise<[IFileData | null, IErrorDict | null]>;
@@ -64,37 +84,54 @@ export class PumpwoodClient {
       });
     };
 
-    this.list = async <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => {
-      return ListService<T>(await buildApi(), modelClass, body, queryParams);
+    this.list = async <T>(params: IListParams) => {
+      const { body, queryParams } = buildListRequest(params);
+      return ListService<T>(await buildApi(), params.modelClass, body, queryParams);
     };
 
-    this.listWithoutPag = async <T>(modelClass: string, body?: any, queryParams?: Record<string, string>) => {
-      return ListWithoutPagService<T>(await buildApi(), modelClass, body, queryParams);
+    this.listWithoutPag = async <T>(params: IListWithoutPagParams) => {
+      const { body, queryParams } = buildListWithoutPagRequest(params);
+      return ListWithoutPagService<T>(await buildApi(), params.modelClass, body, queryParams);
     };
 
-    this.retrieve = async <T>(modelClass: string, pk: number, options?: IRetrieveOptions) => {
-      const queryParams = options ? optionsToQueryParams(options) : undefined;
+    this.listByChunks = async <T>(params: IListByChunksParams) => {
+      return ListByChunksService<T>(await buildApi(), params);
+    };
+
+    this.aggregate = async <T>(params: IAggregateParams) => {
+      const body = buildAggregateRequest(params);
+      return AggregateService<T>(await buildApi(), params.modelClass, body);
+    };
+
+    this.retrieve = async <T>(params: IRetrieveParams) => {
+      const { modelClass, pk } = params;
+      const queryParams = buildRetrieveQueryParams(params);
       return RetrieveService<T>(await buildApi(), modelClass, pk, queryParams);
     };
 
-    this.retrieveFile = async (modelClass: string, pk: number, fileField?: string) => {
-      return RetrieveFileService(await buildApi(), modelClass, pk, fileField);
+    this.retrieveFile = async (params: IRetrieveFileParams) => {
+      const { modelClass, pk, fileField } = params;
+      const queryParams = buildRetrieveFileQueryParams(params);
+      return RetrieveFileService(await buildApi(), modelClass, pk, fileField, queryParams);
     };
 
-    this.retrieveOptions = async <T>(modelClass: string, body?: Record<string, any>) => {
-      return RetrieveOptionsService<T>(await buildApi(), modelClass, body);
+    this.retrieveOptions = async <T>({ modelClass }: IRetrieveOptionsParams) => {
+      return RetrieveOptionsService<T>(await buildApi(), modelClass);
     };
 
-    this.save = async <T>(modelClass: string, body: Record<any, any>, options?: ISaveOptions) => {
-      const queryParams = options ? optionsToQueryParams(options) : undefined;
-      return SaveService<T>(await buildApi(), modelClass, body, queryParams);
+    this.save = async <T>(params: ISaveParams) => {
+      const { body, queryParams } = buildSaveRequest(params);
+      return SaveService<T>(await buildApi(), params.modelClass, body, queryParams);
     };
 
-    this.delete = async <T = void>(modelClass: string, pk: number) => {
-      return DeleteService<T>(await buildApi(), modelClass, pk);
+    this.delete = async <T = void>(params: IDeleteParams) => {
+      const queryParams = buildDeleteQueryParams(params);
+      return DeleteService<T>(await buildApi(), params.modelClass, params.pk, queryParams);
     };
 
-    this.uploadFile = async <T>(modelClass: string, file: File, jsonData: Record<string, any>, queryParams?: Record<string, string>) => {
+    this.uploadFile = async <T>(params: IUploadFileParams) => {
+      const { modelClass, file, jsonData } = params;
+      const queryParams = buildUploadFileQueryParams(params);
       return UploadFileService<T>(await buildApi(), modelClass, file, jsonData, queryParams);
     };
 
