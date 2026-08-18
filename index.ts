@@ -17,6 +17,8 @@ export type {
   IDeleteParams,
   IRetrieveFileParams,
   IRetrieveOptionsParams,
+  IListDimensionsParams,
+  IListDimensionValuesParams,
   AggregateFunction,
   IAggregateSpec,
   IAggregateAgg,
@@ -32,6 +34,8 @@ export { PumpwoodClient } from "./src/core/pumpwood-client.js";
 export { ListService } from "./src/services/list.js";
 export { ListWithoutPagService } from "./src/services/list-without-pag.js";
 export { ListByChunksService } from "./src/services/list-by-chunks.js";
+export { ListDimensionsService } from "./src/services/list-dimensions.js";
+export { ListDimensionValuesService } from "./src/services/list-dimension-values.js";
 export { AggregateService } from "./src/services/aggregate.js";
 export { RetrieveService } from "./src/services/retrieve.js";
 export { RetrieveOptionsService } from "./src/services/retrieve-options.js";

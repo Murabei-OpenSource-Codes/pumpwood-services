@@ -2,6 +2,8 @@ import type {
   IAggregateParams,
   IDeleteParams,
   IExtraOptions,
+  IListDimensionValuesParams,
+  IListDimensionsParams,
   IListParams,
   IListWithoutPagParams,
   IRetrieveFileParams,
@@ -192,6 +194,44 @@ export function buildRetrieveFileQueryParams(
   appendQueryParam(queryParams, "base_filter_skip", params.base_filter_skip);
   appendExtraOptionsToQuery(queryParams, params.extraOptions);
   return queryParams;
+}
+
+/** Build POST body and query params for the list-dimensions end-point. */
+export function buildListDimensionsRequest(
+  params: IListDimensionsParams,
+): IRequestParts {
+  const { filter_dict, exclude_dict, base_filter_skip, extraOptions } = params;
+
+  const body: Record<string, unknown> = {
+    filter_dict: filter_dict ?? {},
+    exclude_dict: exclude_dict ?? {},
+    ...extraOptions,
+  };
+
+  const queryParams: Record<string, string> = {};
+  appendQueryParam(queryParams, "base_filter_skip", base_filter_skip);
+
+  return { body, queryParams };
+}
+
+/** Build POST body and query params for the list-dimension-values end-point. */
+export function buildListDimensionValuesRequest(
+  params: IListDimensionValuesParams,
+): IRequestParts {
+  const { filter_dict, exclude_dict, key, base_filter_skip, extraOptions } =
+    params;
+
+  const body: Record<string, unknown> = {
+    filter_dict: filter_dict ?? {},
+    exclude_dict: exclude_dict ?? {},
+    key,
+    ...extraOptions,
+  };
+
+  const queryParams: Record<string, string> = {};
+  appendQueryParam(queryParams, "base_filter_skip", base_filter_skip);
+
+  return { body, queryParams };
 }
 
 /** Build POST body for the aggregate end-point. */

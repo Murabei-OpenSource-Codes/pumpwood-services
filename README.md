@@ -86,15 +86,15 @@ Pumpwood:
 
 | Método | Canal dos parâmetros |
 | ------ | -------------------- |
-| `list`, `listWithoutPag`, `listByChunks`, `aggregate` | POST body (exceto `base_filter_skip`, que vai na query em `list*`) |
+| `list`, `listWithoutPag`, `listByChunks`, `listDimensions`, `listDimensionValues`, `aggregate` | POST body (exceto `base_filter_skip`, que vai na query em `list*`, `listDimensions` e `listDimensionValues`) |
 | `retrieve`, `save`, `uploadFile`, `delete`, `retrieveFile` | query params |
 
 ### Defaults
 
 | Campo | Default | Métodos |
 | ----- | ------- | ------- |
-| `filter_dict` | `{}` | `list`, `listWithoutPag`, `listByChunks`, `aggregate` |
-| `exclude_dict` | `{}` | `list`, `listWithoutPag`, `listByChunks`, `aggregate` |
+| `filter_dict` | `{}` | `list`, `listWithoutPag`, `listByChunks`, `listDimensions`, `listDimensionValues`, `aggregate` |
+| `exclude_dict` | `{}` | `list`, `listWithoutPag`, `listByChunks`, `listDimensions`, `listDimensionValues`, `aggregate` |
 | `limit` | `50` | `list` |
 | `chunkSize` | `100` | `listByChunks` |
 | `maxItems` | omitido (sem limite total) | `listByChunks` |
@@ -209,6 +209,46 @@ const [allAreas, error] = await pumpwood.listWithoutPag<GeoArea[]>({
   filter_dict: { is_active: true },
   fields: ["pk", "name"],
   order_by: ["name"],
+});
+if (error) throw new Error(error.message);
+```
+
+---
+
+### `listDimensions`
+
+```typescript
+pumpwood.listDimensions<T = string[]>(params: IListDimensionsParams)
+```
+
+`POST /{modelClass}/list-dimensions/` — lista as chaves de dimensão
+disponíveis no modelo, restritas por `filter_dict` e `exclude_dict`.
+
+```typescript
+const [keys, error] = await pumpwood.listDimensions({
+  modelClass: "mymodel",
+  filter_dict: { is_active: true },
+});
+if (error) throw new Error(error.message);
+```
+
+---
+
+### `listDimensionValues`
+
+```typescript
+pumpwood.listDimensionValues<T = unknown[]>(params: IListDimensionValuesParams)
+```
+
+`POST /{modelClass}/list-dimension-values/` — lista os valores de uma
+chave de dimensão nos registros retornados pelos filtros. O parâmetro
+`key` é obrigatório.
+
+```typescript
+const [values, error] = await pumpwood.listDimensionValues<string>({
+  modelClass: "mymodel",
+  key: "region",
+  filter_dict: { is_active: true },
 });
 if (error) throw new Error(error.message);
 ```
@@ -581,7 +621,7 @@ const [items, error] = await ListService<Item[]>(api, "mymodel", {
 });
 ```
 
-Serviços disponíveis: `ListService`, `ListWithoutPagService`, `AggregateService`, `RetrieveService`, `RetrieveOptionsService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, `ExecuteStaticActionService`, `ExecuteActionFileService`, `LoginService`, `LoginSSOService`, `GetSSOTokenService`.
+Serviços disponíveis: `ListService`, `ListWithoutPagService`, `ListByChunksService`, `ListDimensionsService`, `ListDimensionValuesService`, `AggregateService`, `RetrieveService`, `RetrieveOptionsService`, `RetrieveFileService`, `SaveService`, `DeleteService`, `UploadFileService`, `ExecuteActionService`, `ExecuteStaticActionService`, `ExecuteActionFileService`, `LoginService`, `LoginSSOService`, `GetSSOTokenService`.
 
 ---
 
