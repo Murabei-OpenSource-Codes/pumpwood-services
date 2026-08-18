@@ -1,1 +1,0 @@
-{"version":3,"file":"login-sso.d.ts","sourceRoot":"","sources":["../../../src/services/login-sso.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,mBAAmB,CAAC;AACpD,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,kBAAkB,CAAC;AAIxD;;;;;;;;;;;GAWG;AACH,eAAO,MAAM,eAAe,GAC1B,SAAS,MAAM,EACf,OAAO,MAAM,KACZ,OAAO,CAAC,CAAC,eAAe,GAAG,IAAI,EAAE,UAAU,GAAG,IAAI,CAAC,CAyCrD,CAAC"}

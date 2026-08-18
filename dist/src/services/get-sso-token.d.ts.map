@@ -1,1 +1,0 @@
-{"version":3,"file":"get-sso-token.d.ts","sourceRoot":"","sources":["../../../src/services/get-sso-token.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,mBAAmB,CAAC;AACpD,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,kBAAkB,CAAC;AAI3D;;;;;;;;;;;;;;GAcG;AACH,eAAO,MAAM,kBAAkB,GAC7B,KAAK,MAAM,KACV,OAAO,CAAC,CAAC,kBAAkB,GAAG,IAAI,EAAE,UAAU,GAAG,IAAI,CAAC,CA4CxD,CAAC"}
