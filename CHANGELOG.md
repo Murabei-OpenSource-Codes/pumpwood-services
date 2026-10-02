@@ -9,6 +9,16 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
 
+## [2.2.0] - 2026-10-02
+
+### Added
+- `PumpwoodPk` and flexible `retrieve` `pk` — numeric id, base64
+  string, or unique-field dict (serialized for the URL path)
+- `serializePumpwoodPkForPath` and `dumpPumpwoodPkDict` — parity with
+  pumpwood-communication `CompositePkBase64Converter.dump_dict`
+- `save` — optional `upsert` query param (insert when pk not found)
+
+
 ## [2.1.0] - 2026-08-18
 
 ### Added

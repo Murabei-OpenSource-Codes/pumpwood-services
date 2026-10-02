@@ -104,11 +104,13 @@ export function buildSaveRequest(params: ISaveParams): IRequestParts {
     foreign_key_fields,
     related_fields,
     base_filter_skip,
+    upsert,
     extraOptions,
   } = params;
 
   const queryParams: Record<string, string> = {};
   appendQueryParam(queryParams, "fields", fields);
+  appendQueryParam(queryParams, "upsert", upsert);
   appendQueryParam(
     queryParams,
     "default_fields",

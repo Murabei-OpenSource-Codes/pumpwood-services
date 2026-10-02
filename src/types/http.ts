@@ -28,6 +28,11 @@ export interface IPumpwoodClientConfig {
  */
 export type IExtraOptions = Record<string, unknown>;
 
+/**
+ * Primary key: numeric id, base64 hash from retrieve, or unique-field query dict.
+ */
+export type PumpwoodPk = number | string | Record<string, unknown>;
+
 export interface IListParams {
   modelClass: string;
   filter_dict?: Record<string, unknown>;
@@ -53,7 +58,7 @@ export interface IListByChunksParams extends Omit<IListParams, "limit" | "order_
 
 export interface IRetrieveParams {
   modelClass: string;
-  pk: number;
+  pk: PumpwoodPk;
   fields?: string[];
   default_fields?: boolean;
   foreign_key_fields?: boolean;
@@ -70,6 +75,8 @@ export interface ISaveParams {
   foreign_key_fields?: boolean;
   related_fields?: boolean;
   base_filter_skip?: string[];
+  /** When true, insert if pk is not found instead of raising not found. */
+  upsert?: boolean;
   extraOptions?: IExtraOptions;
 }
 

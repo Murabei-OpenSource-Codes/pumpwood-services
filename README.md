@@ -105,6 +105,7 @@ Pumpwood:
 | `default_fields` | `false` | `list`, `listWithoutPag`, `listByChunks`, `retrieve`, `save` |
 | `foreign_key_fields` | `true` | `list`, `listWithoutPag`, `listByChunks`, `retrieve`, `save`, `uploadFile` |
 | `related_fields` | `true` | `list`, `listWithoutPag`, `listByChunks`, `retrieve`, `save`, `uploadFile` |
+| `upsert` | omitido (`false` no backend) | `save` |
 
 Para trazer só o essencial, passe `foreign_key_fields: false` e
 `related_fields: false` explicitamente.
@@ -298,8 +299,10 @@ incluir registros deletados.
 pumpwood.retrieve<T>(params: IRetrieveParams)
 ```
 
-`GET /{modelClass}/retrieve/{pk}/` — busca um registro por pk. Por padrão
-expande foreign keys e related fields.
+`GET /{modelClass}/retrieve/{pk}/` — busca um registro por pk. O `pk`
+aceita número, string base64 (hash retornado pelo backend) ou dict de
+campos únicos (convertido para base64 na URL). Por padrão expande
+foreign keys e related fields.
 
 ```typescript
 const [area, error] = await pumpwood.retrieve<GeoArea>({
@@ -307,6 +310,12 @@ const [area, error] = await pumpwood.retrieve<GeoArea>({
   pk: 1,
 });
 if (error) throw new Error(error.message);
+
+const [job, jobError] = await pumpwood.retrieve<EtlJob>({
+  modelClass: "ETLJob",
+  pk: { code: "only_id_data--error" },
+});
+if (jobError) throw new Error(jobError.message);
 
 // opt-out
 const [areaLight, lightError] = await pumpwood.retrieve<GeoArea>({
@@ -358,12 +367,25 @@ const [savedLight, saveLightError] = await pumpwood.save<GeoArea>({
   foreign_key_fields: false,
   related_fields: false,
 });
+
+const [upserted, upsertError] = await pumpwood.save<EtlJob>({
+  modelClass: "ETLJob",
+  upsert: true,
+  body: {
+    pk: { code: "only_id_data--error" },
+    model_class: "ETLJob",
+    code: "only_id_data--error",
+    description: "Only id data: Erro duplicates",
+  },
+});
+if (upsertError) throw new Error(upsertError.message);
 ```
 
-O `body` é o payload do modelo; os parâmetros de controle (`fields`,
+O `body` é o payload do modelo (`pk` pode ser número, null, dict de
+campos únicos ou hash base64). Os parâmetros de controle (`fields`,
 `foreign_key_fields`, `related_fields`, `default_fields`,
-`base_filter_skip`, `extraOptions`) ficam no topo e viajam como query
-params.
+`base_filter_skip`, `upsert`, `extraOptions`) ficam no topo e viajam
+como query params.
 
 ---
 
@@ -709,8 +731,9 @@ O campo `error.status` (401) e o helper `isUnauthorizedError(error)` também est
 | `IListParams`            | `{ modelClass, filter_dict?, exclude_dict?, order_by?, fields?, default_fields?, limit?, foreign_key_fields?, related_fields?, base_filter_skip?, extraOptions? }` |
 | `IListWithoutPagParams`  | `IListParams` sem `limit`                                   |
 | `IListByChunksParams`    | `IListParams` sem `limit` / `order_by`; `chunkSize?`, `maxItems?` |
-| `IRetrieveParams`        | `{ modelClass, pk, fields?, default_fields?, foreign_key_fields?, related_fields?, base_filter_skip?, extraOptions? }` |
-| `ISaveParams`            | `IRetrieveParams` sem `pk`, com `body` obrigatório          |
+| `PumpwoodPk`             | `number \| string \| Record<string, unknown>` — id, hash base64 ou dict |
+| `IRetrieveParams`        | `{ modelClass, pk: PumpwoodPk, fields?, ... }` |
+| `ISaveParams`            | `IRetrieveParams` sem `pk`, com `body` obrigatório e `upsert?` |
 | `IUploadFileParams`      | `{ modelClass, file, jsonData, foreign_key_fields?, related_fields?, extraOptions? }` |
 | `IDeleteParams`          | `{ modelClass, pk, force_delete?, base_filter_skip?, extraOptions? }` |
 | `IRetrieveFileParams`    | `{ modelClass, pk, fileField?, base_filter_skip?, extraOptions? }` |
