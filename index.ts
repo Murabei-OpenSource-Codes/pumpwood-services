@@ -8,6 +8,7 @@ export type {
   IPumpwoodClientConfig,
   UnauthorizedHandler,
   IExtraOptions,
+  PumpwoodPk,
   IListParams,
   IListWithoutPagParams,
   IListByChunksParams,
@@ -29,6 +30,10 @@ export type {
   IGetSSOTokenResult,
 } from "./src/types/http.js";
 export { safeAwait } from "./src/core/safe-await.js";
+export {
+  dumpPumpwoodPkDict,
+  serializePumpwoodPkForPath,
+} from "./src/core/serialize-pumpwood-pk.js";
 export { ApiService } from "./src/core/api-service.js";
 export { PumpwoodClient } from "./src/core/pumpwood-client.js";
 export { ListService } from "./src/services/list.js";
